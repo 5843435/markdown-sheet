@@ -16,5 +16,13 @@ yarn-error.log
 # Tauri
 src-tauri/target/
 
+# Ignore nested Cargo build artifacts anywhere
+**/target/
+
+# markdown-sheet specifics
+markdown-sheet/node_modules/
+markdown-sheet/dist/
+markdown-sheet/build/
+
 # Misc
 *.log

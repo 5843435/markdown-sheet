@@ -1,0 +1,62 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px;
+  background: #1e1e2e;
+  border-bottom: 1px solid #313244;
+  height: 40px;
+  user-select: none;
+  -webkit-app-region: drag;
+}
+
+.toolbar button {
+  -webkit-app-region: no-drag;
+  background: #313244;
+  border: 1px solid #45475a;
+  color: #cdd6f4;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.15s;
+}
+
+.toolbar button:hover:not(:disabled) {
+  background: #45475a;
+}
+
+.toolbar button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  -webkit-app-region: no-drag;
+}
+
+.toolbar-separator {
+  width: 1px;
+  height: 20px;
+  background: #45475a;
+  margin: 0 6px;
+}
+
+.toolbar-right {
+  -webkit-app-region: no-drag;
+}
+
+.file-name {
+  color: #a6adc8;
+  font-size: 12px;
+}
+
+.icon {
+  font-size: 14px;
+}

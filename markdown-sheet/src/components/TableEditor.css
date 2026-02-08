@@ -1,0 +1,266 @@
+.table-editor {
+  flex: 1;
+  overflow: auto;
+  padding: 0 16px 16px;
+  background: #11111b;
+  display: flex;
+  flex-direction: column;
+}
+
+.table-editor-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #6c7086;
+  background: #11111b;
+}
+
+.table-editor-empty .hint {
+  font-size: 12px;
+  margin-top: 8px;
+  color: #585b70;
+}
+
+/* 書式バー */
+.format-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px;
+  border-bottom: 1px solid #313244;
+  background: #1e1e2e;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.fmt-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: #cdd6f4;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.fmt-btn:hover {
+  background: #313244;
+  border-color: #45475a;
+}
+
+.fmt-btn:active {
+  background: #45475a;
+}
+
+.fmt-italic {
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.fmt-code {
+  font-size: 11px;
+  font-family: "Consolas", "Courier New", monospace;
+}
+
+.fmt-separator {
+  width: 1px;
+  height: 20px;
+  background: #45475a;
+  margin: 0 6px;
+}
+
+.fmt-hint {
+  color: #6c7086;
+  font-size: 11px;
+  font-family: "Consolas", monospace;
+  margin-left: auto;
+}
+
+/* テーブルセクション */
+.table-section {
+  margin-bottom: 32px;
+  margin-top: 16px;
+}
+
+.table-heading {
+  color: #cba6f7;
+  font-size: 16px;
+  margin: 0 0 8px 0;
+  font-weight: 600;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #313244;
+  border-radius: 6px;
+}
+
+.md-table {
+  border-collapse: collapse;
+  width: max-content;
+  min-width: 100%;
+  font-size: 13px;
+}
+
+.md-table th,
+.md-table td {
+  border: 1px solid #313244;
+  padding: 0;
+  position: relative;
+}
+
+.md-table thead th {
+  background: #1e1e2e;
+  color: #cdd6f4;
+  font-weight: 600;
+}
+
+.md-table tbody td {
+  background: #181825;
+  color: #cdd6f4;
+}
+
+.row-number {
+  width: 36px;
+  min-width: 36px;
+  max-width: 36px;
+  text-align: center;
+  color: #585b70;
+  font-size: 11px;
+  background: #1e1e2e !important;
+  user-select: none;
+  padding: 6px 4px !important;
+}
+
+.table-cell {
+  min-width: 80px;
+  cursor: cell;
+  outline: none;
+}
+
+.table-cell:focus,
+.table-cell.selected {
+  outline: 2px solid #89b4fa;
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+.table-cell.editing {
+  padding: 0;
+  outline: 2px solid #a6e3a1;
+  outline-offset: -2px;
+}
+
+.cell-text {
+  display: block;
+  padding: 6px 8px;
+  min-height: 20px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cell-text strong {
+  font-weight: 700;
+  color: #f5e0dc;
+}
+
+.cell-text em {
+  font-style: italic;
+  color: #f5c2e7;
+}
+
+.cell-text del {
+  text-decoration: line-through;
+  color: #a6adc8;
+}
+
+.md-inline-code {
+  background: #313244;
+  color: #a6e3a1;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: "Consolas", "Courier New", monospace;
+  font-size: 12px;
+}
+
+.cell-input {
+  width: 100%;
+  height: 100%;
+  min-height: 32px;
+  border: none;
+  outline: none;
+  background: #181825;
+  color: #cdd6f4;
+  font-size: 13px;
+  font-family: inherit;
+  padding: 6px 8px;
+  box-sizing: border-box;
+}
+
+/* 挿入/削除ダイアログ */
+.insert-delete-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.insert-delete-dialog {
+  background: #1e1e2e;
+  border: 1px solid #45475a;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  padding: 12px;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.iddlg-title {
+  color: #cdd6f4;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 4px 8px 8px;
+  border-bottom: 1px solid #313244;
+  margin-bottom: 4px;
+}
+
+.insert-delete-dialog button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #cdd6f4;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.insert-delete-dialog button:hover:not(:disabled) {
+  background: #313244;
+}
+
+.insert-delete-dialog button:disabled {
+  color: #585b70;
+  cursor: default;
+}
+
+.iddlg-cancel {
+  margin-top: 4px;
+  border-top: 1px solid #313244 !important;
+  padding-top: 8px !important;
+  color: #a6adc8 !important;
+}
