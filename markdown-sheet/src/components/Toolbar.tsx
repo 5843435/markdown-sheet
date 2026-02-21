@@ -6,6 +6,9 @@ interface Props {
   dirty: boolean;
   canUndo: boolean;
   canRedo: boolean;
+  theme: "light" | "dark";
+  activeViewTab: "preview" | "table";
+  editorVisible: boolean;
   onOpenFolder: () => void;
   onOpenFile: () => void;
   onSave: () => void;
@@ -13,6 +16,11 @@ interface Props {
   onUndo: () => void;
   onRedo: () => void;
   onToggleSearch: () => void;
+  onToggleTheme: () => void;
+  onExportPdf: () => void;
+  onExportHtml: () => void;
+  onCopyRichText: () => void;
+  onToggleEditor: () => void;
 }
 
 const Toolbar: FC<Props> = ({
@@ -20,6 +28,9 @@ const Toolbar: FC<Props> = ({
   dirty,
   canUndo,
   canRedo,
+  theme,
+  activeViewTab,
+  editorVisible,
   onOpenFolder,
   onOpenFile,
   onSave,
@@ -27,6 +38,11 @@ const Toolbar: FC<Props> = ({
   onUndo,
   onRedo,
   onToggleSearch,
+  onToggleTheme,
+  onExportPdf,
+  onExportHtml,
+  onCopyRichText,
+  onToggleEditor,
 }) => {
   return (
     <div className="toolbar">
@@ -54,11 +70,39 @@ const Toolbar: FC<Props> = ({
         <button onClick={onToggleSearch} title="検索・置換 (Ctrl+F)">
           &#128269; 検索
         </button>
+        {activeViewTab === "preview" && (
+          <>
+            <div className="toolbar-separator" />
+            <button
+              onClick={onToggleEditor}
+              title={`エディタを${editorVisible ? "非表示" : "表示"} (Ctrl+\\)`}
+            >
+              {editorVisible ? "◀ エディタ" : "▶ エディタ"}
+            </button>
+            <div className="toolbar-separator" />
+            <button onClick={onCopyRichText} title="書式付きでコピー (PPT/Excel向け)">
+              書式コピー
+            </button>
+            <button onClick={onExportPdf} title="PDFとしてエクスポート">
+              PDF
+            </button>
+            <button onClick={onExportHtml} title="HTMLとしてエクスポート">
+              HTML
+            </button>
+          </>
+        )}
       </div>
       <div className="toolbar-right">
         <span className="file-name">
           {fileName ? `${fileName}${dirty ? " *" : ""}` : "ファイル未選択"}
         </span>
+        <button
+          className="theme-toggle"
+          onClick={onToggleTheme}
+          title={`${theme === "light" ? "ダーク" : "ライト"}テーマに切替`}
+        >
+          {theme === "light" ? "\u263E" : "\u2600"}
+        </button>
       </div>
     </div>
   );

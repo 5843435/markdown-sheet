@@ -3,8 +3,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 4px 12px;
-  background: #1e1e2e;
-  border-bottom: 1px solid #313244;
+  background: var(--bg-overlay);
+  border-bottom: 1px solid var(--border);
   height: 40px;
   user-select: none;
   -webkit-app-region: drag;
@@ -12,21 +12,24 @@
 
 .toolbar button {
   -webkit-app-region: no-drag;
-  background: #313244;
-  border: 1px solid #45475a;
-  color: #cdd6f4;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text);
   padding: 4px 10px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
+  font-family: var(--font-main);
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  transition: background 0.15s;
+  transition: background 0.15s, border-color 0.15s;
 }
 
 .toolbar button:hover:not(:disabled) {
-  background: #45475a;
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
 }
 
 .toolbar button:disabled {
@@ -44,19 +47,46 @@
 .toolbar-separator {
   width: 1px;
   height: 20px;
-  background: #45475a;
+  background: var(--border);
   margin: 0 6px;
 }
 
 .toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   -webkit-app-region: no-drag;
 }
 
 .file-name {
-  color: #a6adc8;
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
 .icon {
   font-size: 14px;
+}
+
+/* Theme Toggle */
+.theme-toggle {
+  -webkit-app-region: no-drag;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.theme-toggle:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
 }

@@ -2,8 +2,8 @@
   width: 240px;
   min-width: 180px;
   max-width: 360px;
-  background: #181825;
-  border-right: 1px solid #313244;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
   overflow-y: auto;
   padding: 8px 0;
   font-size: 13px;
@@ -19,19 +19,19 @@
   gap: 6px;
   padding: 4px 12px;
   cursor: pointer;
-  color: #cdd6f4;
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .tree-item:hover {
-  background: #313244;
+  background: var(--bg-overlay);
 }
 
 .tree-item.active {
-  background: #45475a;
-  color: #f5c2e7;
+  background: var(--border-hover);
+  color: var(--primary);
 }
 
 .tree-icon {
@@ -39,7 +39,7 @@
   width: 14px;
   text-align: center;
   font-size: 12px;
-  color: #a6adc8;
+  color: var(--text-secondary);
 }
 
 .tree-label {
@@ -48,7 +48,7 @@
 }
 
 .tree-empty {
-  color: #6c7086;
+  color: var(--text-muted);
   padding: 20px 12px;
   text-align: center;
   font-size: 12px;

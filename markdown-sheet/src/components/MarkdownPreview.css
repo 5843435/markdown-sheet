@@ -1,0 +1,250 @@
+/* ========== Preview Panel ========== */
+.preview-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.preview-controls-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: var(--bg-overlay);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.preview-controls-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-right: 2px;
+}
+
+.preview-select {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 3px;
+  padding: 2px 4px;
+  font-size: 11px;
+  font-family: var(--font-main);
+  cursor: pointer;
+  outline: none;
+  height: 22px;
+}
+
+.preview-select:hover,
+.preview-select:focus {
+  border-color: var(--primary);
+}
+
+/* ========== Markdown Preview ========== */
+.md-preview {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  font-family: var(--font-main);
+  line-height: 1.8;
+  color: var(--text);
+  background: var(--bg-base);
+}
+
+/* Typography */
+.md-preview p {
+  margin-bottom: 1.2em;
+  text-align: justify;
+  text-justify: inter-ideograph;
+}
+
+.md-preview h1, .md-preview h2, .md-preview h3, .md-preview h4, .md-preview h5, .md-preview h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.6em;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+}
+
+.md-preview h1 {
+  font-size: 1.8rem;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0.3em;
+  color: var(--primary-hover);
+}
+
+.md-preview h2 {
+  font-size: 1.4rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3em;
+  color: var(--primary);
+}
+
+.md-preview h3 { font-size: 1.2rem; }
+
+.md-preview ul, .md-preview ol {
+  padding-left: 2em;
+  margin-bottom: 1.2em;
+}
+
+.md-preview li { margin-bottom: 0.4em; }
+
+.md-preview code {
+  font-family: "Consolas", "Monaco", monospace;
+  background: var(--inline-code-bg);
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+  color: var(--inline-code-text);
+  border: 1px solid var(--border);
+}
+
+.md-preview pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin-bottom: 1.2em;
+}
+
+.md-preview pre code {
+  background: none;
+  color: var(--code-text);
+  padding: 0;
+  border-radius: 0;
+  border: none;
+}
+
+.md-preview blockquote {
+  border-left: 4px solid var(--primary);
+  margin: 0 0 1.2em 0;
+  padding: 0.8em 1em;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border-radius: 0 4px 4px 0;
+  font-style: italic;
+}
+
+.md-preview hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2em 0;
+}
+
+.md-preview a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.md-preview a:hover {
+  text-decoration: underline;
+}
+
+.md-preview img {
+  max-width: 100%;
+  border-radius: 4px;
+}
+
+/* Tables in preview */
+.md-preview table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.2em 0;
+  box-shadow: 0 1px 3px var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.md-preview table thead {
+  background-color: var(--bg-surface);
+}
+
+.md-preview table thead th {
+  color: var(--text);
+  font-weight: 600;
+  padding: 10px 12px;
+  text-align: left;
+  border: 1px solid var(--border);
+}
+
+.md-preview table tbody td {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+}
+
+.md-preview table tbody tr:hover {
+  background-color: var(--bg-surface);
+}
+
+/* ========== Mermaid ========== */
+.mermaid-placeholder {
+  margin: 1.2em 0;
+}
+
+.mermaid-source-fallback {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.mermaid-source-fallback code {
+  background: none;
+  color: var(--code-text);
+  padding: 0;
+  border: none;
+}
+
+.mermaid-container {
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 8px;
+  margin: 0;
+  text-align: center;
+  border: 1px solid var(--border);
+  position: relative;
+}
+
+.mermaid-rendered {
+  overflow-x: auto;
+}
+
+.mermaid-rendered svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.mermaid-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.mermaid-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-main);
+}
+
+.mermaid-btn:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* ========== Task List (GFM) ========== */
+.md-preview input[type="checkbox"] {
+  margin-right: 0.5em;
+}

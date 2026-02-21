@@ -14,4 +14,12 @@ export default defineConfig(async () => ({
       ? { protocol: "ws", host, port: 1421 }
       : undefined,
   },
+  optimizeDeps: {
+    include: ["mermaid", "highlight.js"],
+    exclude: [
+      "@tauri-apps/api",
+      "@tauri-apps/plugin-dialog",
+      "@tauri-apps/plugin-fs",
+    ],
+  },
 }));

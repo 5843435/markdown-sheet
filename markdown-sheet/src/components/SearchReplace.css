@@ -1,6 +1,6 @@
 .search-replace {
-  background: #1e1e2e;
-  border-bottom: 1px solid #313244;
+  background: var(--bg-overlay);
+  border-bottom: 1px solid var(--border);
   padding: 6px 12px;
   display: flex;
   flex-direction: column;
@@ -15,31 +15,33 @@
 
 .sr-row input {
   flex: 1;
-  background: #313244;
-  border: 1px solid #45475a;
-  color: #cdd6f4;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text);
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 13px;
   outline: none;
+  font-family: var(--font-main);
 }
 
 .sr-row input:focus {
-  border-color: #89b4fa;
+  border-color: var(--accent-blue);
 }
 
 .sr-row button {
-  background: #313244;
-  border: 1px solid #45475a;
-  color: #cdd6f4;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text);
   padding: 4px 10px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
+  font-family: var(--font-main);
 }
 
 .sr-row button:hover:not(:disabled) {
-  background: #45475a;
+  background: var(--border-hover);
 }
 
 .sr-row button:disabled {
@@ -47,7 +49,7 @@
 }
 
 .sr-count {
-  color: #a6adc8;
+  color: var(--text-secondary);
   font-size: 12px;
   min-width: 50px;
   text-align: center;

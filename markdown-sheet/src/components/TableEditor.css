@@ -2,7 +2,7 @@
   flex: 1;
   overflow: auto;
   padding: 0 16px 16px;
-  background: #11111b;
+  background: var(--bg-base);
   display: flex;
   flex-direction: column;
 }
@@ -13,24 +13,24 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #6c7086;
-  background: #11111b;
+  color: var(--text-muted);
+  background: var(--bg-base);
 }
 
 .table-editor-empty .hint {
   font-size: 12px;
   margin-top: 8px;
-  color: #585b70;
+  color: var(--text-muted);
 }
 
-/* 書式バー */
+/* Format bar */
 .format-bar {
   display: flex;
   align-items: center;
   gap: 2px;
   padding: 6px 4px;
-  border-bottom: 1px solid #313244;
-  background: #1e1e2e;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-overlay);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -39,7 +39,7 @@
 .fmt-btn {
   background: none;
   border: 1px solid transparent;
-  color: #cdd6f4;
+  color: var(--text);
   width: 28px;
   height: 28px;
   border-radius: 4px;
@@ -52,12 +52,12 @@
 }
 
 .fmt-btn:hover {
-  background: #313244;
-  border-color: #45475a;
+  background: var(--bg-surface);
+  border-color: var(--border);
 }
 
 .fmt-btn:active {
-  background: #45475a;
+  background: var(--border-hover);
 }
 
 .fmt-italic {
@@ -72,25 +72,25 @@
 .fmt-separator {
   width: 1px;
   height: 20px;
-  background: #45475a;
+  background: var(--border);
   margin: 0 6px;
 }
 
 .fmt-hint {
-  color: #6c7086;
+  color: var(--text-muted);
   font-size: 11px;
   font-family: "Consolas", monospace;
   margin-left: auto;
 }
 
-/* テーブルセクション */
+/* Table section */
 .table-section {
   margin-bottom: 32px;
   margin-top: 16px;
 }
 
 .table-heading {
-  color: #cba6f7;
+  color: var(--primary);
   font-size: 16px;
   margin: 0 0 8px 0;
   font-weight: 600;
@@ -98,7 +98,7 @@
 
 .table-wrapper {
   overflow-x: auto;
-  border: 1px solid #313244;
+  border: 1px solid var(--border);
   border-radius: 6px;
 }
 
@@ -111,20 +111,20 @@
 
 .md-table th,
 .md-table td {
-  border: 1px solid #313244;
+  border: 1px solid var(--border);
   padding: 0;
   position: relative;
 }
 
 .md-table thead th {
-  background: #1e1e2e;
-  color: #cdd6f4;
+  background: var(--bg-overlay);
+  color: var(--text);
   font-weight: 600;
 }
 
 .md-table tbody td {
-  background: #181825;
-  color: #cdd6f4;
+  background: var(--bg-surface);
+  color: var(--text);
 }
 
 .row-number {
@@ -132,9 +132,9 @@
   min-width: 36px;
   max-width: 36px;
   text-align: center;
-  color: #585b70;
+  color: var(--text-muted);
   font-size: 11px;
-  background: #1e1e2e !important;
+  background: var(--bg-overlay) !important;
   user-select: none;
   padding: 6px 4px !important;
 }
@@ -147,14 +147,14 @@
 
 .table-cell:focus,
 .table-cell.selected {
-  outline: 2px solid #89b4fa;
+  outline: 2px solid var(--cell-selected);
   outline-offset: -2px;
   z-index: 1;
 }
 
 .table-cell.editing {
   padding: 0;
-  outline: 2px solid #a6e3a1;
+  outline: 2px solid var(--cell-editing);
   outline-offset: -2px;
 }
 
@@ -168,22 +168,22 @@
 
 .cell-text strong {
   font-weight: 700;
-  color: #f5e0dc;
+  color: var(--cell-strong);
 }
 
 .cell-text em {
   font-style: italic;
-  color: #f5c2e7;
+  color: var(--cell-em);
 }
 
 .cell-text del {
   text-decoration: line-through;
-  color: #a6adc8;
+  color: var(--cell-del);
 }
 
 .md-inline-code {
-  background: #313244;
-  color: #a6e3a1;
+  background: var(--inline-code-bg);
+  color: var(--inline-code-text);
   padding: 1px 4px;
   border-radius: 3px;
   font-family: "Consolas", "Courier New", monospace;
@@ -196,15 +196,15 @@
   min-height: 32px;
   border: none;
   outline: none;
-  background: #181825;
-  color: #cdd6f4;
+  background: var(--bg-input);
+  color: var(--text);
   font-size: 13px;
   font-family: inherit;
   padding: 6px 8px;
   box-sizing: border-box;
 }
 
-/* 挿入/削除ダイアログ */
+/* Insert/Delete dialog */
 .insert-delete-overlay {
   position: fixed;
   inset: 0;
@@ -216,10 +216,10 @@
 }
 
 .insert-delete-dialog {
-  background: #1e1e2e;
-  border: 1px solid #45475a;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-hover);
   border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 32px var(--shadow-strong);
   padding: 12px;
   min-width: 200px;
   display: flex;
@@ -228,11 +228,11 @@
 }
 
 .iddlg-title {
-  color: #cdd6f4;
+  color: var(--text);
   font-size: 14px;
   font-weight: 600;
   padding: 4px 8px 8px;
-  border-bottom: 1px solid #313244;
+  border-bottom: 1px solid var(--border);
   margin-bottom: 4px;
 }
 
@@ -242,25 +242,26 @@
   text-align: left;
   background: none;
   border: none;
-  color: #cdd6f4;
+  color: var(--text);
   padding: 8px 12px;
   font-size: 13px;
   cursor: pointer;
   border-radius: 4px;
+  font-family: var(--font-main);
 }
 
 .insert-delete-dialog button:hover:not(:disabled) {
-  background: #313244;
+  background: var(--bg-surface);
 }
 
 .insert-delete-dialog button:disabled {
-  color: #585b70;
+  color: var(--text-muted);
   cursor: default;
 }
 
 .iddlg-cancel {
   margin-top: 4px;
-  border-top: 1px solid #313244 !important;
+  border-top: 1px solid var(--border) !important;
   padding-top: 8px !important;
-  color: #a6adc8 !important;
+  color: var(--text-secondary) !important;
 }
