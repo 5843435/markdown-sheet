@@ -48,9 +48,11 @@ function App() {
     message: string;
     isError: boolean;
   } | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showToast = (message: string, isError = false) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast({ message, isError });
-    setTimeout(() => setToast(null), 3000);
+    toastTimerRef.current = setTimeout(() => setToast(null), 3000);
   };
 
   // --- Table editor ---
@@ -73,6 +75,12 @@ function App() {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+
+  // --- Editor undo/redo stack ---
+  const undoStackRef = useRef<string[]>([]);
+  const redoStackRef = useRef<string[]>([]);
+  const contentRef = useRef("");
+  contentRef.current = content; // 毎レンダーで最新値に更新
 
   // --- Scroll sync ---
   const [syncScroll, setSyncScroll] = useState(
@@ -245,17 +253,27 @@ function App() {
     }
   }, [activeViewTab, originalLines, tables, content]);
 
-  // --- Editor content change ---
-  const handleContentChange = useCallback(
+  // --- Apply content (undo/redo スタックを経由しない低レベル更新) ---
+  const applyContent = useCallback(
     (newContent: string) => {
       setContent(newContent);
       setDirty(true);
-      // テーブルデータも再パース
       const doc = parseMarkdown(newContent);
       setOriginalLines(doc.lines);
       reset(doc.tables);
     },
     [reset]
+  );
+
+  // --- Editor content change (undo スタックに積む) ---
+  const handleContentChange = useCallback(
+    (newContent: string) => {
+      undoStackRef.current.push(contentRef.current);
+      if (undoStackRef.current.length > 200) undoStackRef.current.shift();
+      redoStackRef.current = [];
+      applyContent(newContent);
+    },
+    [applyContent]
   );
 
   // --- Table cell operations (mark dirty) ---
@@ -353,12 +371,15 @@ function App() {
       const title = activeFile
         ? activeFile.split(/[\\/]/).pop() || "document"
         : "document";
+      const safeTitle = title.replace(/[&<>"]/g, (c) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] ?? c)
+      );
       const exportContent = `<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title}</title>
+    <title>${safeTitle}</title>
     <style>
       body { font-family: "Segoe UI", "Meiryo", sans-serif; line-height: 1.8; color: #333; max-width: 800px; margin: 0 auto; padding: 2rem; }
       pre { background-color: #f6f8fa; padding: 16px; border-radius: 6px; overflow-x: auto; }
@@ -379,7 +400,7 @@ function App() {
 
       const path = await save({
         filters: [{ name: "HTML", extensions: ["html", "htm"] }],
-        defaultPath: `${title.replace(/\.md$/i, "")}.html`,
+        defaultPath: `${title.replace(/\.md$/i, "")}.html`,  // ファイル名はそのまま
       });
       if (path) {
         await writeTextFile(path, exportContent);
@@ -500,10 +521,26 @@ function App() {
         handleSave();
       } else if (e.ctrlKey && e.key === "z") {
         e.preventDefault();
-        undo();
+        if (activeViewTab === "preview") {
+          if (undoStackRef.current.length > 0) {
+            const prev = undoStackRef.current.pop()!;
+            redoStackRef.current.push(contentRef.current);
+            applyContent(prev);
+          }
+        } else {
+          undo();
+        }
       } else if (e.ctrlKey && e.key === "y") {
         e.preventDefault();
-        redo();
+        if (activeViewTab === "preview") {
+          if (redoStackRef.current.length > 0) {
+            const next = redoStackRef.current.pop()!;
+            undoStackRef.current.push(contentRef.current);
+            applyContent(next);
+          }
+        } else {
+          redo();
+        }
       } else if (e.ctrlKey && (e.key === "f" || e.key === "h")) {
         e.preventDefault();
         setShowSearch((s) => !s);
@@ -523,7 +560,7 @@ function App() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleSave, undo, redo, handleCopyRichText, handleInsertFormatting, activeViewTab]);
+  }, [handleSave, applyContent, undo, redo, handleCopyRichText, handleInsertFormatting, activeViewTab]);
 
   // --- Divider drag ---
   const handleMouseDown = useCallback(

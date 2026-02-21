@@ -110,7 +110,7 @@ const MarkdownPreview: FC<Props> = ({ content, previewRef: externalRef }) => {
 
   // Markdown レンダリング（テーブル空行を正規化してから）
   useEffect(() => {
-    mermaidCounter = 0;
+    // mermaidCounter はリセットしない（IDの衝突を防ぐため単調増加させる）
     try {
       const normalized = normalizeTableLines(content);
       const result = marked(normalized) as string;

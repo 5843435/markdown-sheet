@@ -135,6 +135,20 @@
   margin: 2em 0;
 }
 
+.md-preview em {
+  font-style: italic;
+}
+
+.md-preview strong {
+  font-weight: 700;
+}
+
+.md-preview strong em,
+.md-preview em strong {
+  font-style: italic;
+  font-weight: 700;
+}
+
 .md-preview a {
   color: var(--primary);
   text-decoration: none;
