@@ -227,17 +227,31 @@
 }
 
 .mermaid-rendered svg {
+  display: block;
   max-width: 100%;
   height: auto;
 }
 
 .mermaid-actions {
   display: flex;
+  align-items: center;
   gap: 6px;
-  justify-content: flex-end;
+  justify-content: flex-start;
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--border);
+}
+
+.mermaid-zoom-label {
+  min-width: 40px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: "Consolas", "Monaco", monospace;
+}
+
+.mermaid-actions-spacer {
+  flex: 1;
 }
 
 .mermaid-btn {
@@ -256,6 +270,68 @@
   background: var(--primary);
   color: white;
   border-color: var(--primary);
+}
+
+.mermaid-error {
+  color: #c53030;
+  background: #fff5f5;
+  border: 1px solid #feb2b2;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: "Consolas", monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ========== YAML Front Matter ========== */
+.yaml-front-matter {
+  background: var(--bg-overlay);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 1.5em;
+  font-size: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+
+.yaml-entry {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.yaml-key {
+  color: var(--primary);
+  font-weight: 600;
+  font-family: "Consolas", "Monaco", monospace;
+}
+
+.yaml-value {
+  color: var(--text-secondary);
+}
+
+/* ========== KaTeX Math ========== */
+.math-block {
+  margin: 1.2em 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.math-inline {
+  display: inline;
+}
+
+.math-block-display {
+  margin: 1.2em 0;
+  text-align: center;
+  overflow-x: auto;
+}
+
+.katex-display {
+  overflow-x: auto;
 }
 
 /* ========== Task List (GFM) ========== */

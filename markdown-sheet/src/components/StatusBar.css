@@ -1,0 +1,52 @@
+.status-bar {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 12px;
+  background: var(--bg-overlay);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  user-select: none;
+  gap: 0;
+}
+
+.status-item {
+  padding: 0 8px;
+  white-space: nowrap;
+}
+
+.status-sep {
+  width: 1px;
+  height: 12px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.status-spacer {
+  flex: 1;
+}
+
+.status-autosave-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  padding: 1px 6px;
+  cursor: pointer;
+  font-family: var(--font-main);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.status-autosave-btn.active {
+  color: var(--accent-green);
+  border-color: var(--accent-green);
+}
+
+.status-autosave-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}

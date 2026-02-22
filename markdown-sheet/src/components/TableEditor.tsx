@@ -30,6 +30,7 @@ interface Props {
     position: "left" | "right"
   ) => void;
   onDeleteColumn: (tableIndex: number, col: number) => void;
+  onExportCsv?: (tableIndex: number) => void;
 }
 
 /** Markdown書式のトグル */
@@ -85,6 +86,7 @@ const TableEditor: FC<Props> = ({
   onDeleteRow,
   onAddColumn,
   onDeleteColumn,
+  onExportCsv,
 }) => {
   const [editingCell, setEditingCell] = useState<CellPosition | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -643,7 +645,18 @@ const TableEditor: FC<Props> = ({
 
       {tables.map((table, ti) => (
         <div key={ti} className="table-section">
-          {table.heading && <h3 className="table-heading">{table.heading}</h3>}
+          <div className="table-section-header">
+            {table.heading && <h3 className="table-heading">{table.heading}</h3>}
+            {onExportCsv && (
+              <button
+                className="csv-export-btn"
+                onClick={() => onExportCsv(ti)}
+                title="このテーブルをCSVでエクスポート"
+              >
+                CSV↓
+              </button>
+            )}
+          </div>
           <div className="table-wrapper">
             <table className="md-table">
               <thead>

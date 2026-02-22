@@ -41,3 +41,22 @@ export interface ContextMenuState {
 
 /** Undo/Redo 用のスナップショット */
 export type TablesSnapshot = MarkdownTable[];
+
+/** 最近開いたファイルのエントリ */
+export interface RecentFile {
+  path: string;
+  name: string;
+  ts: number;
+}
+
+/** エディタタブ1つ分の保存状態 */
+export interface Tab {
+  id: string;
+  filePath: string | null;
+  content: string;
+  originalLines: string[];
+  tables: MarkdownTable[];
+  dirty: boolean;
+  contentUndoStack: string[];
+  contentRedoStack: string[];
+}

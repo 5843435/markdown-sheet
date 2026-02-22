@@ -1,0 +1,109 @@
+.tab-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  background: var(--bg-overlay);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-shrink: 0;
+  height: 32px;
+  padding: 0 4px;
+  gap: 1px;
+}
+
+.tab-bar::-webkit-scrollbar {
+  height: 3px;
+}
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px 0 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  max-width: 180px;
+  transition: background 0.12s, color 0.12s;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.tab-item:hover {
+  background: var(--bg-base);
+  color: var(--text);
+}
+
+.tab-item.active {
+  background: var(--bg-base);
+  color: var(--text);
+  border-color: var(--border);
+  border-bottom-color: var(--bg-base);
+  font-weight: 500;
+  position: relative;
+  z-index: 1;
+}
+
+.tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.tab-close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 1px 2px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+
+.tab-close-btn:hover {
+  background: var(--accent-red);
+  color: white;
+}
+
+.tab-close-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.tab-new-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 8px;
+  border-radius: 4px;
+  height: 24px;
+  align-self: center;
+  transition: background 0.12s, color 0.12s;
+  font-family: var(--font-main);
+  flex-shrink: 0;
+}
+
+.tab-new-btn:hover {
+  background: var(--bg-surface);
+  color: var(--primary);
+  border-color: var(--border);
+}

@@ -228,7 +228,7 @@ body {
 /* ========== Toast ========== */
 .toast {
   position: fixed;
-  bottom: 24px;
+  bottom: 36px;
   left: 50%;
   transform: translateX(-50%);
   padding: 10px 20px;

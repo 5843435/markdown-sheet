@@ -89,11 +89,38 @@
   margin-top: 16px;
 }
 
+.table-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
 .table-heading {
   color: var(--primary);
   font-size: 16px;
-  margin: 0 0 8px 0;
+  margin: 0;
   font-weight: 600;
+  flex: 1;
+}
+
+.csv-export-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-family: var(--font-main);
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.csv-export-btn:hover {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+  color: white;
 }
 
 .table-wrapper {

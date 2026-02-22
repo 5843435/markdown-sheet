@@ -21,11 +21,11 @@ const FileTreeNode: FC<{
       <div className="tree-node">
         <div
           className="tree-item tree-dir"
-          style={{ paddingLeft: depth * 16 }}
+          style={{ paddingLeft: depth * 16 + 8 }}
           onClick={() => setExpanded(!expanded)}
         >
-          <span className="tree-icon">{expanded ? "\u25BE" : "\u25B8"}</span>
-          <span className="tree-label">{entry.name}</span>
+          <span className="tree-icon tree-dir-icon">{expanded ? "▼" : "▶"}</span>
+          <span className="tree-dir-label">{entry.name}</span>
         </div>
         {expanded &&
           entry.children?.map((child) => (
@@ -44,10 +44,10 @@ const FileTreeNode: FC<{
   return (
     <div
       className={`tree-item tree-file ${activeFile === entry.path ? "active" : ""}`}
-      style={{ paddingLeft: depth * 16 }}
+      style={{ paddingLeft: depth * 16 + 8 }}
       onClick={() => onSelectFile(entry.path)}
     >
-      <span className="tree-icon">{"\u2630"}</span>
+      <span className="tree-icon tree-file-icon">·</span>
       <span className="tree-label">{entry.name}</span>
     </div>
   );
