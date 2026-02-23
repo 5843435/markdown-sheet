@@ -67,6 +67,29 @@
   font-size: 14px;
 }
 
+/* Settings Button */
+.settings-btn {
+  -webkit-app-region: no-drag;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  transition: all 0.2s;
+  padding: 0;
+}
+.settings-btn:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
 /* Theme Toggle */
 .theme-toggle {
   -webkit-app-region: no-drag;

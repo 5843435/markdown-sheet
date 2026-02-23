@@ -65,46 +65,46 @@ npm run tauri build
 ### 全体構成
 
 ```mermaid
-graph TB
+graph LR
     subgraph TAURI["Tauri 2 デスクトップアプリ"]
         subgraph RUST["Rust バックエンド"]
-            CMD["commands.rs\nget_file_tree()\nread_markdown_file()\nsave_markdown_file()"]
-            RPARSER["markdown_parser.rs\nparse_markdown()\nrebuild_document()"]
+            CMD["ファイル操作\n（読み取り・保存）"]
+            RPARSER["文章の整形・変換"]
             CMD --- RPARSER
         end
 
-        IPC{{"Tauri IPC\ninvoke()"}}
+        IPC{{"連携機能"}}
 
-        subgraph WEBVIEW["WebView — React 19 + TypeScript"]
-            APP["App.tsx\n状態管理 / キーボードSC / Undo スタック\nスクロール同期 / エクスポート"]
+        subgraph WEBVIEW["画面表示部 — React 19 + TypeScript"]
+            APP["メイン処理\n（状態管理・操作履歴・同期など）"]
 
-            subgraph COMP["Components"]
-                TBR["Toolbar"]
-                FT["FileTree"]
-                MP["MarkdownPreview"]
-                TE["TableEditor + ContextMenu"]
-                SR["SearchReplace"]
+            subgraph COMP["表示パーツ"]
+                TBR["ツールバー"]
+                FT["ファイル一覧"]
+                MP["プレビュー表示"]
+                TE["表の編集機能"]
+                SR["検索・置換"]
             end
 
-            subgraph HOOKS["Hooks / Lib"]
-                UTE["useTableEditor\nセル編集・行列追加削除"]
-                UUR["useUndoRedo(T)\n汎用 Undo/Redo スタック"]
-                MDPJS["markdownParser.ts\nJS側パーサー(同期処理用)"]
+            subgraph HOOKS["共通機能"]
+                UTE["表の編集支援"]
+                UUR["戻る／進む機能"]
+                MDPJS["文章の解析（サブ処理）"]
             end
 
-            subgraph EXTLIB["外部ライブラリ"]
-                MRK["marked v17\nMarkdown → HTML"]
-                MRM["Mermaid v11\n図ダイアグラム"]
-                HJS["highlight.js\nコードハイライト"]
-                H2P["html2pdf.js\nPDF出力"]
+            subgraph EXTLIB["外部機能"]
+                MRK["文章 → 見やすい形式"]
+                MRM["図やグラフの描画"]
+                HJS["プログラムコードの色分け"]
+                H2P["PDF出力"]
             end
         end
     end
 
-    subgraph OS["OS"]
-        FS[("ファイルシステム\n.md / .html / .svg")]
-        DLG["ネイティブダイアログ"]
-        CLIP["クリップボード"]
+    subgraph OS["コンピューター"]
+        FS[("ファイル保存場所")]
+        DLG["ファイル選択画面"]
+        CLIP["コピー＆ペースト"]
     end
 
     RUST <--> IPC
@@ -113,9 +113,9 @@ graph TB
     APP --> HOOKS
     MP --> EXTLIB
     UTE --> UUR
-    APP <-->|"plugin-fs"| FS
-    APP <-->|"plugin-dialog"| DLG
-    APP -->|"navigator.clipboard"| CLIP
+    APP <-->|"ファイルアクセス"| FS
+    APP <-->|"ダイアログ表示"| DLG
+    APP -->|"コピー機能"| CLIP
 ```
 
 ### データフロー

@@ -49,6 +49,15 @@ export interface RecentFile {
   ts: number;
 }
 
+/** AI API 設定 */
+export interface AiSettings {
+  provider: string;
+  apiKey: string;
+  model: string;
+  baseUrl: string;
+  apiFormat: "openai" | "anthropic";
+}
+
 /** エディタタブ1つ分の保存状態 */
 export interface Tab {
   id: string;
