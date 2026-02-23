@@ -1,4 +1,6 @@
 import { type FC, useEffect, useRef, useState } from "react";
+import type { AiSettings } from "../types";
+import { callAI } from "../lib/callAI";
 import { marked } from "marked";
 import hljs from "highlight.js";
 import "highlight.js/styles/atom-one-dark.css";
@@ -130,13 +132,26 @@ const FONT_MAP: Record<string, string> = {
 interface Props {
   content: string;
   previewRef?: React.RefObject<HTMLDivElement | null>;
+  aiSettings?: AiSettings;
+  onUpdateMermaidBlock?: (blockIndex: number, newSource: string) => void;
 }
 
-const MarkdownPreview: FC<Props> = ({ content, previewRef: externalRef }) => {
+const MarkdownPreview: FC<Props> = ({
+  content,
+  previewRef: externalRef,
+  aiSettings,
+  onUpdateMermaidBlock,
+}) => {
   const [html, setHtml] = useState("");
   const [frontMatter, setFrontMatter] = useState<Record<string, string> | null>(null);
   const internalRef = useRef<HTMLDivElement>(null);
   const ref = externalRef || internalRef;
+  // AI 設定と更新コールバックの最新値を ref で保持（useEffect 内の stale closure 回避）
+  const aiSettingsRef = useRef(aiSettings);
+  aiSettingsRef.current = aiSettings;
+  const onUpdateMermaidBlockRef = useRef(onUpdateMermaidBlock);
+  onUpdateMermaidBlockRef.current = onUpdateMermaidBlock;
+
   // dangerouslySetInnerHTML の代わりに手動で innerHTML を管理する ref。
   // React 19 StrictMode は true unmount/remount を行うため、
   // dangerouslySetInnerHTML を使うと remount 時に innerHTML がリセットされ
@@ -238,6 +253,10 @@ const MarkdownPreview: FC<Props> = ({ content, previewRef: externalRef }) => {
           rendered.className = "mermaid-rendered";
           rendered.appendChild(svgNode);
 
+          // このブロックの index（AI 編集でエディタ上の何番目のコードブロックかを特定するため）
+          const allPlaceholders = Array.from(container.querySelectorAll(".mermaid-placeholder"));
+          const blockIndex = allPlaceholders.indexOf(placeholder);
+
           const actionsDiv = document.createElement("div");
           actionsDiv.className = "mermaid-actions";
           actionsDiv.innerHTML = `
@@ -248,12 +267,26 @@ const MarkdownPreview: FC<Props> = ({ content, previewRef: externalRef }) => {
             <div class="mermaid-actions-spacer"></div>
             <button class="mermaid-btn mermaid-copy-svg" title="SVGをコピー">SVGコピー</button>
             <button class="mermaid-btn mermaid-save-svg" title="SVGを保存">SVG保存</button>
+            <button class="mermaid-btn mermaid-ai-toggle" title="AIでダイアグラムを編集">✦ AI編集</button>
+          `;
+
+          // AI 編集パネル
+          const aiPanel = document.createElement("div");
+          aiPanel.className = "mermaid-ai-panel";
+          aiPanel.style.display = "none";
+          aiPanel.innerHTML = `
+            <textarea class="mermaid-ai-input" placeholder="指示を入力（例: 左から右に変えて）" rows="2"></textarea>
+            <div class="mermaid-ai-row">
+              <button class="mermaid-btn mermaid-ai-submit">送信</button>
+              <span class="mermaid-ai-status"></span>
+            </div>
           `;
 
           const wrapper = document.createElement("div");
           wrapper.className = "mermaid-container";
           wrapper.appendChild(rendered);
           wrapper.appendChild(actionsDiv);
+          wrapper.appendChild(aiPanel);
 
           // SVG の固有サイズを取得する。
           // width="100%" のようなパーセント値は実ピクセル数ではないため無視し、
@@ -320,6 +353,57 @@ const MarkdownPreview: FC<Props> = ({ content, previewRef: externalRef }) => {
               if (path) await writeTextFile(path, processedSvg);
             } catch (err) {
               console.error("SVG save error:", err);
+            }
+          });
+
+          // AI 編集パネルの開閉
+          actionsDiv.querySelector(".mermaid-ai-toggle")?.addEventListener("click", () => {
+            const open = aiPanel.style.display === "none";
+            aiPanel.style.display = open ? "block" : "none";
+            if (open) aiPanel.querySelector<HTMLTextAreaElement>(".mermaid-ai-input")?.focus();
+          });
+
+          // AI 送信
+          const handleAiSubmit = async () => {
+            const settings = aiSettingsRef.current;
+            const statusEl = aiPanel.querySelector<HTMLElement>(".mermaid-ai-status");
+            if (!settings?.apiKey) {
+              if (statusEl) statusEl.textContent = "⚙ ツールバーの設定でAPIキーを入力してください";
+              return;
+            }
+            const inputEl = aiPanel.querySelector<HTMLTextAreaElement>(".mermaid-ai-input");
+            const instruction = inputEl?.value.trim() ?? "";
+            if (!instruction) return;
+
+            const submitBtn = aiPanel.querySelector<HTMLButtonElement>(".mermaid-ai-submit");
+            if (submitBtn) submitBtn.disabled = true;
+            if (statusEl) statusEl.textContent = "処理中...";
+
+            try {
+              let newSource = await callAI(
+                settings,
+                SYSTEM_PROMPT,
+                `Mermaid source:\n${source}\n\nInstruction: ${instruction}`
+              );
+              // AI がコードフェンスを付けた場合でも除去する
+              newSource = newSource.replace(/^```(?:mermaid)?\r?\n?/, "").replace(/\r?\n?```$/, "").trim();
+              onUpdateMermaidBlockRef.current?.(blockIndex, newSource);
+              if (statusEl) statusEl.textContent = "✓ 更新しました";
+              if (inputEl) inputEl.value = "";
+              setTimeout(() => { aiPanel.style.display = "none"; }, 1200);
+            } catch (err) {
+              if (statusEl) statusEl.textContent = `⚠ ${err instanceof Error ? err.message : String(err)}`;
+            } finally {
+              if (submitBtn) submitBtn.disabled = false;
+            }
+          };
+
+          aiPanel.querySelector(".mermaid-ai-submit")?.addEventListener("click", handleAiSubmit);
+          // Enter キーで送信（Shift+Enter で改行）
+          aiPanel.querySelector(".mermaid-ai-input")?.addEventListener("keydown", (e) => {
+            if ((e as KeyboardEvent).key === "Enter" && !(e as KeyboardEvent).shiftKey) {
+              e.preventDefault();
+              handleAiSubmit();
             }
           });
 
@@ -556,6 +640,13 @@ function processSvgForPowerPoint(liveSvgEl: SVGSVGElement): string {
 
   return new XMLSerializer().serializeToString(clone);
 }
+
+const SYSTEM_PROMPT =
+  "You are a Mermaid diagram editor. " +
+  "Given a Mermaid diagram source and an instruction, " +
+  "return ONLY the modified Mermaid source code. " +
+  "Do NOT include any explanation, markdown code fences, or extra text.";
+
 
 /** "rgb(r,g,b)" / "rgba(r,g,b,a)" → "#rrggbb" に変換する */
 function rgbToHex(val: string): string {

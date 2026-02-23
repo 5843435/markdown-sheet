@@ -1,0 +1,187 @@
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-modal {
+  width: 460px;
+  max-width: calc(100vw - 40px);
+  padding: 24px 28px;
+  border-radius: 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 32px var(--shadow-strong);
+  color: var(--text);
+  font-family: var(--font-main);
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.settings-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text);
+}
+
+.settings-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--text-secondary);
+  padding: 4px 6px;
+  border-radius: 4px;
+  line-height: 1;
+}
+.settings-close:hover {
+  background: var(--bg-overlay);
+  color: var(--text);
+}
+
+.settings-section {
+  margin-bottom: 20px;
+}
+
+.settings-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ラベル + 入力欄 */
+.settings-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 12px 0 4px;
+}
+.settings-label:first-of-type {
+  margin-top: 0;
+}
+
+.settings-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg-input);
+  color: var(--text);
+  font-size: 12px;
+  font-family: "Consolas", "Monaco", monospace;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.settings-input:focus {
+  border-color: var(--primary);
+}
+
+/* プロバイダープルダウン */
+.settings-select {
+  font-family: var(--font-main);
+  cursor: pointer;
+}
+
+.settings-format-badge {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 6px 0 0;
+}
+.settings-format-badge strong {
+  color: var(--primary);
+}
+
+/* テストボタン行 */
+.settings-test-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.settings-detect-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg-overlay);
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: var(--font-main);
+  transition: background 0.15s;
+}
+.settings-detect-btn:hover:not(:disabled) {
+  background: var(--border);
+}
+.settings-detect-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settings-detect-msg {
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-all;
+  white-space: pre-wrap;
+  width: 100%;
+}
+.settings-detect-msg.ok  { color: var(--accent-green); }
+.settings-detect-msg.err { color: var(--accent-red); }
+
+/* フッター */
+.settings-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.settings-close-btn {
+  padding: 7px 16px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg-overlay);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: var(--font-main);
+  transition: background 0.15s;
+}
+.settings-close-btn:hover {
+  background: var(--border);
+}
+
+.settings-save-btn {
+  padding: 7px 20px;
+  border: 1px solid var(--primary);
+  border-radius: 5px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-main);
+  transition: background 0.15s;
+}
+.settings-save-btn:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}

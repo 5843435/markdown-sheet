@@ -272,6 +272,46 @@
   border-color: var(--primary);
 }
 
+/* AI 編集パネル */
+.mermaid-ai-panel {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.mermaid-ai-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-input);
+  color: var(--text);
+  font-size: 12px;
+  font-family: var(--font-main);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+  margin-bottom: 8px;
+}
+.mermaid-ai-input:focus {
+  border-color: var(--primary);
+}
+
+.mermaid-ai-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mermaid-ai-status {
+  font-size: 11px;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
 .mermaid-error {
   color: #c53030;
   background: #fff5f5;

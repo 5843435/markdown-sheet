@@ -24,6 +24,7 @@ interface Props {
   onCopyRichText: () => void;
   onPasteFromClipboard: () => void;
   onToggleEditor: () => void;
+  onOpenSettings: () => void;
 }
 
 const Toolbar: FC<Props> = ({
@@ -48,6 +49,7 @@ const Toolbar: FC<Props> = ({
   onCopyRichText,
   onPasteFromClipboard,
   onToggleEditor,
+  onOpenSettings,
 }) => {
   const [showRecent, setShowRecent] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -165,6 +167,13 @@ const Toolbar: FC<Props> = ({
         )}
       </div>
       <div className="toolbar-right">
+        <button
+          className="settings-btn"
+          onClick={onOpenSettings}
+          title="設定 (AI API など)"
+        >
+          ⚙
+        </button>
         <button
           className="theme-toggle"
           onClick={onToggleTheme}

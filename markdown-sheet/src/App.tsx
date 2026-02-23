@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import "./App.css";
 import FileTree from "./components/FileTree";
 import MarkdownPreview from "./components/MarkdownPreview";
+import Settings from "./components/Settings";
 import OutlinePanel from "./components/OutlinePanel";
 import SearchReplace from "./components/SearchReplace";
 import StatusBar from "./components/StatusBar";
@@ -12,9 +13,182 @@ import TabBar from "./components/TabBar";
 import TableEditor from "./components/TableEditor";
 import Toolbar from "./components/Toolbar";
 import { useTableEditor } from "./hooks/useTableEditor";
+import { callAI } from "./lib/callAI";
 import { makeHeadingId } from "./lib/headingId";
 import { parseMarkdown, rebuildDocument } from "./lib/markdownParser";
-import type { FileEntry, MarkdownTable, ParsedDocument, RecentFile, Tab } from "./types";
+import type { AiSettings, FileEntry, MarkdownTable, ParsedDocument, RecentFile, Tab } from "./types";
+
+// ========== AI & Template Constants ==========
+
+const MERMAID_GENERATE_PROMPT =
+  "You are a Mermaid diagram generator. " +
+  "Based on the user's description, generate appropriate Mermaid diagram source code. " +
+  "Output ONLY the raw Mermaid source. Do NOT include code fences, explanation, or any other text.";
+
+const TRANSFORM_OPTIONS = [
+  {
+    id: "translate",
+    label: "翻訳 (日⇔英)",
+    prompt:
+      "Translate the following text. If it is Japanese, translate to English. If it is English, translate to Japanese. " +
+      "Return ONLY the translated text, no explanations.",
+  },
+  {
+    id: "summarize",
+    label: "要約",
+    prompt:
+      "Summarize the following text concisely in Japanese. Return ONLY the summary, no additional commentary.",
+  },
+  {
+    id: "proofread",
+    label: "校正",
+    prompt:
+      "Proofread and correct any grammatical or spelling errors in the following text. " +
+      "Preserve the original language and tone. Return ONLY the corrected text.",
+  },
+  {
+    id: "bullets",
+    label: "箇条書き変換",
+    prompt:
+      "Convert the following text into a Markdown bullet list using '- ' prefix. " +
+      "Return ONLY the bullet list, one item per line.",
+  },
+] as const;
+
+const MERMAID_TEMPLATES: { label: string; code: string }[] = [
+  {
+    label: "業務フロー図",
+    code: `flowchart LR
+  開始([開始]) --> 受注[受注処理]
+  受注 --> 確認{在庫確認}
+  確認 -->|あり| 出荷[出荷手配]
+  確認 -->|なし| 発注[仕入発注]
+  発注 --> 入荷[入荷処理]
+  入荷 --> 出荷
+  出荷 --> 請求[請求処理]
+  請求 --> 終了([終了])`,
+  },
+  {
+    label: "シーケンス図",
+    code: `sequenceDiagram
+  actor ユーザー
+  participant フロント as フロントエンド
+  participant API as バックエンドAPI
+  participant DB as データベース
+  ユーザー->>フロント: ログイン要求
+  フロント->>API: 認証リクエスト
+  API->>DB: ユーザー照合
+  DB-->>API: ユーザー情報
+  API-->>フロント: JWTトークン
+  フロント-->>ユーザー: ログイン成功`,
+  },
+  {
+    label: "ER図",
+    code: `erDiagram
+  顧客 ||--o{ 注文 : "する"
+  注文 ||--|{ 注文明細 : "含む"
+  商品 ||--o{ 注文明細 : "含まれる"
+  顧客 {
+    int 顧客ID PK
+    string 氏名
+    string 電話番号
+  }
+  注文 {
+    int 注文ID PK
+    int 顧客ID FK
+    date 注文日
+  }
+  商品 {
+    int 商品ID PK
+    string 商品名
+    int 価格
+  }`,
+  },
+  {
+    label: "ガントチャート",
+    code: `gantt
+  title プロジェクト計画
+  dateFormat YYYY-MM-DD
+  section 企画フェーズ
+    要件定義      :a1, 2025-04-01, 14d
+    設計書作成    :a2, after a1, 7d
+  section 開発フェーズ
+    フロント開発  :b1, after a2, 21d
+    バックエンド  :b2, after a2, 21d
+    テスト        :b3, after b1, 14d
+  section リリース
+    UAT           :c1, after b3, 7d
+    本番リリース  :c2, after c1, 1d`,
+  },
+  {
+    label: "クラス図",
+    code: `classDiagram
+  class ユーザー {
+    +int id
+    +string 名前
+    +string メール
+    +ログイン() bool
+    +ログアウト() void
+  }
+  class 管理者 {
+    +string 権限レベル
+    +ユーザー削除(id) void
+  }
+  class 一般ユーザー {
+    +int ポイント
+    +ポイント使用(amount) void
+  }
+  ユーザー <|-- 管理者
+  ユーザー <|-- 一般ユーザー`,
+  },
+  {
+    label: "マインドマップ",
+    code: `mindmap
+  root((プロジェクト))
+    目標
+      売上向上
+      コスト削減
+    課題
+      リソース不足
+      スケジュール遅延
+    解決策
+      人員補充
+      外部委託
+      工程見直し`,
+  },
+  {
+    label: "組織図",
+    code: `graph TD
+  CEO[代表取締役]
+  CEO --> COO[最高執行責任者]
+  CEO --> CFO[最高財務責任者]
+  COO --> 営業部[営業部長]
+  COO --> 開発部[開発部長]
+  営業部 --> 営業1[営業チーム1]
+  営業部 --> 営業2[営業チーム2]
+  開発部 --> FE[フロントエンドチーム]
+  開発部 --> BE[バックエンドチーム]`,
+  },
+  {
+    label: "状態遷移図",
+    code: `stateDiagram-v2
+  [*] --> 待機中
+  待機中 --> 処理中 : 開始
+  処理中 --> 完了 : 成功
+  処理中 --> エラー : 失敗
+  エラー --> 待機中 : リトライ
+  完了 --> [*]
+  エラー --> [*] : キャンセル`,
+  },
+  {
+    label: "円グラフ",
+    code: `pie title 売上構成比
+  "製品A" : 42.5
+  "製品B" : 27.3
+  "製品C" : 18.2
+  "その他" : 12.0`,
+  },
+];
 
 // @ts-ignore
 import html2pdf from "html2pdf.js";
@@ -36,6 +210,46 @@ function makeInitialTab(): Tab {
 }
 
 function App() {
+  // --- AI Settings ---
+  const [aiSettings, setAiSettings] = useState<AiSettings>(() => {
+    const defaults: AiSettings = {
+      provider: "deepseek",
+      apiKey: "",
+      model: "deepseek-chat",
+      baseUrl: "https://api.deepseek.com/v1",
+      apiFormat: "openai",
+    };
+    try {
+      const saved = JSON.parse(localStorage.getItem("md-ai-settings") || "null");
+      return saved ? { ...defaults, ...saved } : defaults;
+    } catch {
+      return defaults;
+    }
+  });
+  const [showSettings, setShowSettings] = useState(false);
+
+  // --- Feature 1: AI Mermaid generation ---
+  const [showAiGenerate, setShowAiGenerate] = useState(false);
+  const [aiGenerateDesc, setAiGenerateDesc] = useState("");
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiGenerateError, setAiGenerateError] = useState("");
+
+  // --- Feature 2: AI text transform ---
+  const [aiTransformOpen, setAiTransformOpen] = useState(false);
+  const [aiTransformPos, setAiTransformPos] = useState<{ x: number; y: number } | null>(null);
+  const [aiTransforming, setAiTransforming] = useState(false);
+  const savedSelectionRef = useRef<{ start: number; end: number } | null>(null);
+  const aiTransformBtnRef = useRef<HTMLButtonElement>(null);
+
+  // --- Feature 3: Mermaid templates ---
+  const [templatePos, setTemplatePos] = useState<{ x: number; y: number } | null>(null);
+  const templateBtnRef = useRef<HTMLButtonElement>(null);
+
+  const handleSaveAiSettings = useCallback((s: AiSettings) => {
+    setAiSettings(s);
+    localStorage.setItem("md-ai-settings", JSON.stringify(s));
+  }, []);
+
   // --- Theme ---
   const [theme, setTheme] = useState<Theme>(() => {
     return (localStorage.getItem("md-theme") as Theme) || "light";
@@ -821,6 +1035,98 @@ function App() {
     [content, handleContentChange]
   );
 
+  // --- Mermaid ブロックを AI で置換 ---
+  const handleUpdateMermaidBlock = useCallback(
+    (blockIndex: number, newSource: string) => {
+      const regex = /```mermaid\r?\n([\s\S]*?)```/g;
+      let idx = 0;
+      const newContent = contentRef.current.replace(regex, (match) => {
+        if (idx++ === blockIndex) {
+          const nl = match.includes("\r\n") ? "\r\n" : "\n";
+          return "```mermaid" + nl + newSource.trim() + nl + "```";
+        }
+        return match;
+      });
+      handleContentChange(newContent);
+    },
+    [handleContentChange]
+  );
+
+  // --- Feature 3: Mermaid template insert ---
+  const handleInsertTemplate = useCallback(
+    (code: string) => {
+      setTemplatePos(null);
+      const textarea = editorRef.current;
+      const pos = textarea ? textarea.selectionStart : contentRef.current.length;
+      const block = "\n\n```mermaid\n" + code + "\n```\n";
+      const newContent =
+        contentRef.current.substring(0, pos) + block + contentRef.current.substring(pos);
+      handleContentChange(newContent);
+      setTimeout(() => {
+        textarea?.focus();
+        textarea?.setSelectionRange(pos + block.length, pos + block.length);
+      }, 0);
+    },
+    [handleContentChange]
+  );
+
+  // --- Feature 2: AI text transform ---
+  const handleAiTransform = useCallback(
+    async (prompt: string) => {
+      setAiTransformOpen(false);
+      setAiTransformPos(null);
+      const sel = savedSelectionRef.current;
+      if (!sel || sel.start === sel.end) return;
+      if (!aiSettings.apiKey) {
+        showToast("⚙ 設定でAPIキーを入力してください", true);
+        return;
+      }
+      const selectedText = contentRef.current.substring(sel.start, sel.end);
+      setAiTransforming(true);
+      try {
+        const result = await callAI(aiSettings, prompt, selectedText);
+        const newContent =
+          contentRef.current.substring(0, sel.start) +
+          result +
+          contentRef.current.substring(sel.end);
+        handleContentChange(newContent);
+        showToast("AIが変換しました");
+      } catch (err) {
+        showToast(`AI変換失敗: ${err instanceof Error ? err.message : String(err)}`, true);
+      } finally {
+        setAiTransforming(false);
+      }
+    },
+    [aiSettings, handleContentChange]
+  );
+
+  // --- Feature 1: AI Mermaid generation ---
+  const handleAiGenerateMermaid = useCallback(async () => {
+    if (!aiSettings.apiKey) {
+      setAiGenerateError("⚙ 設定でAPIキーを入力してください");
+      return;
+    }
+    if (!aiGenerateDesc.trim()) return;
+    setAiGenerating(true);
+    setAiGenerateError("");
+    try {
+      let result = await callAI(aiSettings, MERMAID_GENERATE_PROMPT, aiGenerateDesc);
+      result = result.replace(/^```(?:mermaid)?\r?\n?/, "").replace(/\r?\n?```$/, "").trim();
+      const textarea = editorRef.current;
+      const pos = textarea ? textarea.selectionStart : contentRef.current.length;
+      const block = "\n\n```mermaid\n" + result + "\n```\n";
+      const newContent =
+        contentRef.current.substring(0, pos) + block + contentRef.current.substring(pos);
+      handleContentChange(newContent);
+      setShowAiGenerate(false);
+      setAiGenerateDesc("");
+    } catch (err) {
+      setAiGenerateError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setAiGenerating(false);
+    }
+  }, [aiSettings, aiGenerateDesc, handleContentChange]);
+
   // --- TOC 自動挿入 ---
   const handleInsertToc = useCallback(() => {
     const regex = /^(#{1,6})\s+(.+)/gm;
@@ -1021,6 +1327,18 @@ function App() {
     closeTab,
   ]);
 
+  // --- Close dropdowns on outside click ---
+  useEffect(() => {
+    if (!aiTransformOpen && !templatePos) return;
+    const handleClick = () => {
+      setAiTransformOpen(false);
+      setAiTransformPos(null);
+      setTemplatePos(null);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [aiTransformOpen, templatePos]);
+
   // --- Divider drag ---
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -1076,6 +1394,7 @@ function App() {
         onCopyRichText={handleCopyRichText}
         onPasteFromClipboard={handlePasteFromClipboard}
         onToggleEditor={() => setEditorVisible((v) => !v)}
+        onOpenSettings={() => setShowSettings(true)}
       />
 
       <TabBar
@@ -1191,6 +1510,109 @@ function App() {
                     <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertToc(); }} title="目次を挿入">目次</button>
                     <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleImportCsv(); }} title="CSVをインポートして追加">CSV</button>
                   </div>
+                  {/* ===== AI ツールバー (常に全表示) ===== */}
+                  {(() => {
+                    const aiEnabled = !!aiSettings.apiKey;
+                    return (
+                      <div className={`ai-bar ${aiEnabled ? "ai-bar--on" : "ai-bar--off"}`}>
+                        {/* 状態チップ */}
+                        <span
+                          className="ai-bar__chip"
+                          title={aiEnabled
+                            ? `AI有効: ${aiSettings.provider} / ${aiSettings.model}`
+                            : "APIキーが未設定です。右の「⚙ 設定する」から設定してください"}
+                        >
+                          {aiEnabled ? "✦ AI" : "⚙ AI"}
+                        </span>
+                        <span className="ai-bar__sep" />
+                        {/* Feature 3: Mermaid テンプレート (APIキー不要) */}
+                        <button
+                          ref={templateBtnRef}
+                          className="ai-bar__btn"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (templatePos) {
+                              setTemplatePos(null);
+                            } else {
+                              const rect = templateBtnRef.current?.getBoundingClientRect();
+                              if (rect) setTemplatePos({ x: rect.left, y: rect.bottom + 2 });
+                            }
+                          }}
+                          title="Mermaid図テンプレートを挿入（APIキー不要）"
+                        >
+                          図テンプレ ▾
+                        </button>
+                        <span className="ai-bar__sep" />
+                        {/* Feature 2: AI テキスト変換 */}
+                        <button
+                          ref={aiTransformBtnRef}
+                          className={`ai-bar__btn${!aiEnabled ? " ai-bar__btn--inactive" : ""}${aiTransforming ? " ai-bar__btn--busy" : ""}`}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (!aiEnabled) {
+                              showToast("APIキーが設定されていません。設定を開きます");
+                              setShowSettings(true);
+                              return;
+                            }
+                            const textarea = editorRef.current;
+                            if (!textarea) return;
+                            if (textarea.selectionStart === textarea.selectionEnd) {
+                              showToast("テキストを選択してからクリックしてください");
+                              return;
+                            }
+                            savedSelectionRef.current = {
+                              start: textarea.selectionStart,
+                              end: textarea.selectionEnd,
+                            };
+                            if (aiTransformOpen) {
+                              setAiTransformOpen(false);
+                              setAiTransformPos(null);
+                            } else {
+                              const rect = aiTransformBtnRef.current?.getBoundingClientRect();
+                              if (rect) setAiTransformPos({ x: rect.left, y: rect.bottom + 2 });
+                              setAiTransformOpen(true);
+                            }
+                          }}
+                          title={aiEnabled ? "選択テキストをAIで変換（翻訳・要約・校正・箇条書き）" : "⚙ APIキー未設定 — クリックして設定を開く"}
+                          disabled={aiTransforming}
+                        >
+                          {aiTransforming ? "変換中..." : "AI変換"}
+                        </button>
+                        {/* Feature 1: AI Mermaid 生成 */}
+                        <button
+                          className={`ai-bar__btn${!aiEnabled ? " ai-bar__btn--inactive" : ""}`}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            if (!aiEnabled) {
+                              showToast("APIキーが設定されていません。設定を開きます");
+                              setShowSettings(true);
+                              return;
+                            }
+                            setAiGenerateError("");
+                            setShowAiGenerate(true);
+                          }}
+                          title={aiEnabled ? "AIでMermaid図をゼロから生成" : "⚙ APIキー未設定 — クリックして設定を開く"}
+                        >
+                          AI図生成
+                        </button>
+                        {/* API未設定時: 設定を促すリンク */}
+                        {!aiEnabled && (
+                          <button
+                            className="ai-bar__setup-hint"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setShowSettings(true);
+                            }}
+                            title="設定画面を開いてAPIキーを入力してください"
+                          >
+                            ⚙ 設定する →
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })()}
                   <textarea
                     ref={editorRef}
                     className="editor-textarea"
@@ -1202,7 +1624,12 @@ function App() {
                 <div className="divider" onMouseDown={handleMouseDown} />
               </>
             )}
-            <MarkdownPreview content={content} previewRef={previewRef} />
+            <MarkdownPreview
+              content={content}
+              previewRef={previewRef}
+              aiSettings={aiSettings}
+              onUpdateMermaidBlock={handleUpdateMermaidBlock}
+            />
           </div>
         ) : (
           /* Table edit mode */
@@ -1223,6 +1650,104 @@ function App() {
         autoSave={autoSave}
         onToggleAutoSave={() => setAutoSave((v) => !v)}
       />
+
+      {/* Settings modal */}
+      {showSettings && (
+        <Settings
+          settings={aiSettings}
+          onSave={handleSaveAiSettings}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {/* Feature 3: Mermaid Template dropdown */}
+      {templatePos && (
+        <div
+          className="ai-floating-dropdown"
+          style={{ left: templatePos.x, top: templatePos.y }}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          {MERMAID_TEMPLATES.map((t) => (
+            <button
+              key={t.label}
+              className="ai-dropdown-item"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleInsertTemplate(t.code);
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Feature 2: AI Transform dropdown */}
+      {aiTransformOpen && aiTransformPos && (
+        <div
+          className="ai-floating-dropdown"
+          style={{ left: aiTransformPos.x, top: aiTransformPos.y }}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          {TRANSFORM_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              className="ai-dropdown-item"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleAiTransform(opt.prompt);
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Feature 1: AI Mermaid Generate modal */}
+      {showAiGenerate && (
+        <div className="ai-gen-overlay" onClick={() => { setShowAiGenerate(false); setAiGenerateDesc(""); setAiGenerateError(""); }}>
+          <div className="ai-gen-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="ai-gen-header">
+              <span className="ai-gen-title">✦ AIでMermaid図を生成</span>
+              <button className="settings-close" onClick={() => { setShowAiGenerate(false); setAiGenerateDesc(""); setAiGenerateError(""); }}>✕</button>
+            </div>
+            <p className="ai-gen-hint">図の内容を日本語で説明してください。AIがMermaidコードを生成します。</p>
+            <textarea
+              className="ai-gen-textarea"
+              value={aiGenerateDesc}
+              onChange={(e) => setAiGenerateDesc(e.target.value)}
+              placeholder="例: ECサイトの注文処理フロー図を作って。受注→在庫確認→出荷→請求の流れで"
+              rows={4}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                  e.preventDefault();
+                  handleAiGenerateMermaid();
+                }
+              }}
+            />
+            {aiGenerateError && (
+              <p className="ai-gen-error">{aiGenerateError}</p>
+            )}
+            <div className="ai-gen-footer">
+              <button
+                className="settings-close-btn"
+                onClick={() => { setShowAiGenerate(false); setAiGenerateDesc(""); setAiGenerateError(""); }}
+              >
+                キャンセル
+              </button>
+              <button
+                className="settings-save-btn"
+                onClick={handleAiGenerateMermaid}
+                disabled={aiGenerating || !aiGenerateDesc.trim()}
+              >
+                {aiGenerating ? "生成中..." : "生成 (Ctrl+Enter)"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast */}
       {toast && (
