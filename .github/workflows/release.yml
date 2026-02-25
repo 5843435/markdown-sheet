@@ -36,5 +36,5 @@ jobs:
           releaseBody: |
             ## インストール方法
             `markdown-sheet_*_x64_en-US.msi` をダウンロードして実行してください。
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
