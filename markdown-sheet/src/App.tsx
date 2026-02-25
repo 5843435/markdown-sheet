@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
+import { readTextFile, writeTextFile, writeFile } from "@tauri-apps/plugin-fs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import "./App.css";
 import FileTree from "./components/FileTree";
@@ -464,13 +464,21 @@ function App() {
   const closeTab = useCallback(
     (tabId: string) => {
       const currentTabs = tabsRef.current;
-      if (currentTabs.length === 1) return; // 最後のタブは閉じない
+      if (currentTabs.length <= 1) return; // 最後のタブは閉じない
 
       const isActive = tabId === activeTabIdRef.current;
-      const remaining = currentTabs.filter((t) => t.id !== tabId);
 
+      // 閉じる前に現タブの状態を保存（他タブのデータが最新になるよう）
       if (isActive) {
-        const idx = currentTabs.findIndex((t) => t.id === tabId);
+        saveCurrentToTab();
+      }
+
+      // saveCurrentToTab が setTabs を呼ぶため、最新の tabs を再取得
+      const latestTabs = tabsRef.current;
+      const remaining = latestTabs.filter((t) => t.id !== tabId);
+
+      if (isActive && remaining.length > 0) {
+        const idx = latestTabs.findIndex((t) => t.id === tabId);
         const newActive = remaining[Math.min(idx, remaining.length - 1)];
         setContent(newActive.content);
         setOriginalLines(newActive.originalLines);
@@ -486,7 +494,7 @@ function App() {
 
       setTabs(remaining);
     },
-    [reset]
+    [reset, saveCurrentToTab]
   );
 
   // ====== File Loading ======
@@ -500,8 +508,6 @@ function App() {
         return;
       }
 
-      // 現タブが空なら上書き、そうでなければ現タブを保存して上書き
-      // （Notepad 風: ファイルは現タブに開く）
       try {
         let doc: ParsedDocument;
         try {
@@ -511,36 +517,66 @@ function App() {
           doc = parseMarkdown(text);
         }
 
-        const currentId = activeTabIdRef.current;
         const text = doc.lines.join("\n");
 
-        setOriginalLines(doc.lines);
-        reset(doc.tables);
-        setActiveFile(filePath);
-        setContent(text);
-        setDirty(false);
-        undoStackRef.current = [];
-        redoStackRef.current = [];
-        setContentUndoAvailable(false);
-        setContentRedoAvailable(false);
+        // 現タブが空（未編集・ファイル未割当）なら上書き、そうでなければ新タブで開く
+        const currentTab = tabsRef.current.find((t) => t.id === activeTabIdRef.current);
+        const isCurrentEmpty = currentTab && !currentTab.filePath && !currentTab.dirty && !currentTab.content;
 
-        // タブのfilePath を更新
-        setTabs((prev) =>
-          prev.map((t) =>
-            t.id === currentId
-              ? {
-                  ...t,
-                  filePath,
-                  content: text,
-                  originalLines: doc.lines,
-                  tables: structuredClone(doc.tables),
-                  dirty: false,
-                  contentUndoStack: [],
-                  contentRedoStack: [],
-                }
-              : t
-          )
-        );
+        if (isCurrentEmpty) {
+          // 空タブに上書き
+          const currentId = activeTabIdRef.current;
+          setOriginalLines(doc.lines);
+          reset(doc.tables);
+          setActiveFile(filePath);
+          setContent(text);
+          setDirty(false);
+          undoStackRef.current = [];
+          redoStackRef.current = [];
+          setContentUndoAvailable(false);
+          setContentRedoAvailable(false);
+
+          setTabs((prev) =>
+            prev.map((t) =>
+              t.id === currentId
+                ? {
+                    ...t,
+                    filePath,
+                    content: text,
+                    originalLines: doc.lines,
+                    tables: structuredClone(doc.tables),
+                    dirty: false,
+                    contentUndoStack: [],
+                    contentRedoStack: [],
+                  }
+                : t
+            )
+          );
+        } else {
+          // 新タブで開く
+          saveCurrentToTab();
+          const newTab: Tab = {
+            id: crypto.randomUUID(),
+            filePath,
+            content: text,
+            originalLines: doc.lines,
+            tables: structuredClone(doc.tables),
+            dirty: false,
+            contentUndoStack: [],
+            contentRedoStack: [],
+          };
+          setTabs((prev) => [...prev, newTab]);
+          setActiveTabId(newTab.id);
+          setContent(text);
+          setOriginalLines(doc.lines);
+          setDirty(false);
+          setActiveFile(filePath);
+          undoStackRef.current = [];
+          redoStackRef.current = [];
+          setContentUndoAvailable(false);
+          setContentRedoAvailable(false);
+          reset(doc.tables);
+        }
 
         addRecentFile(filePath);
       } catch (e) {
@@ -548,7 +584,7 @@ function App() {
         showToast("ファイル読み込みに失敗しました", true);
       }
     },
-    [reset, switchToTab, addRecentFile]
+    [reset, switchToTab, addRecentFile, saveCurrentToTab]
   );
 
   // --- Auto-save interval ---
@@ -800,15 +836,27 @@ function App() {
       const fileName = activeFile
         ? activeFile.split(/[\\/]/).pop()?.replace(/\.md$/i, "") || "document"
         : "document";
+
+      // Tauri の save ダイアログでファイルパスを取得
+      const savePath = await save({
+        defaultPath: `${fileName}.pdf`,
+        filters: [{ name: "PDF", extensions: ["pdf"] }],
+      });
+      if (!savePath) return;
+
+      showToast("PDF出力中...");
+
       const opt = {
         margin: 10,
-        filename: `${fileName}.pdf`,
         image: { type: "jpeg" as const, quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: "mm" as const, format: "a4" as const, orientation: "portrait" as const },
       };
-      html2pdf().set(opt).from(el).save();
-      showToast("PDF出力中...");
+
+      // html2pdf.js で ArrayBuffer を取得し、Tauri の writeFile で保存
+      const arrayBuffer: ArrayBuffer = await html2pdf().set(opt).from(el).outputPdf("arraybuffer");
+      await writeFile(savePath, new Uint8Array(arrayBuffer));
+      showToast("PDFを保存しました");
     } catch (error) {
       console.error("PDF export error:", error);
       showToast("PDF出力に失敗しました", true);
@@ -1232,46 +1280,62 @@ function App() {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
-  // --- Image drag & drop ---
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "copy";
-  }, []);
+  // --- File drag & drop (Tauri ネイティブ API) ---
+  // Tauri の WebView では OS からのファイルドロップはブラウザの onDrop に到達しない。
+  // getCurrentWebview().onDragDropEvent() を使用する。
+  const loadFileRef = useRef(loadFile);
+  loadFileRef.current = loadFile;
+  const handleContentChangeRef = useRef(handleContentChange);
+  handleContentChangeRef.current = handleContentChange;
 
-  const handleDrop = useCallback(
-    async (e: React.DragEvent) => {
-      e.preventDefault();
-      const files = Array.from(e.dataTransfer.files);
-      const imageFiles = files.filter((f) => f.type.startsWith("image/"));
-      if (imageFiles.length === 0) return;
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
 
-      const textarea = editorRef.current;
-      if (!textarea) return;
+    (async () => {
+      try {
+        const { getCurrentWebview } = await import("@tauri-apps/api/webview");
+        unlisten = await getCurrentWebview().onDragDropEvent(async (event) => {
+          if (event.payload.type !== "drop") return;
+          const paths = event.payload.paths;
+          if (!paths || paths.length === 0) return;
 
-      const insertions: string[] = [];
-      for (const file of imageFiles) {
-        // Tauri WebView では File オブジェクトに .path プロパティがある
-        const filePath = (file as File & { path?: string }).path || file.name;
-        try {
-          const { convertFileSrc } = await import("@tauri-apps/api/core");
-          const assetUrl = convertFileSrc(filePath);
-          const altText = file.name.replace(/\.[^.]+$/, "");
-          insertions.push(`![${altText}](${assetUrl})`);
-        } catch {
-          insertions.push(`![${file.name}](${filePath})`);
-        }
+          const mdExtensions = [".md", ".markdown", ".txt"];
+          const imageExtensions = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".svg", ".webp"];
+
+          for (const filePath of paths) {
+            const ext = filePath.toLowerCase().replace(/^.*(\.[^.]+)$/, "$1");
+
+            if (mdExtensions.includes(ext)) {
+              // Markdown ファイルは新タブで開く
+              await loadFileRef.current(filePath);
+            } else if (imageExtensions.includes(ext)) {
+              // 画像ファイルはエディタにマークダウン画像構文を挿入
+              const textarea = editorRef.current;
+              if (!textarea) continue;
+              try {
+                const { convertFileSrc } = await import("@tauri-apps/api/core");
+                const assetUrl = convertFileSrc(filePath);
+                const altText = filePath.split(/[\\/]/).pop()?.replace(/\.[^.]+$/, "") || "image";
+                const insertText = `![${altText}](${assetUrl})`;
+                const pos = textarea.selectionStart;
+                const newContent =
+                  contentRef.current.substring(0, pos) +
+                  insertText +
+                  contentRef.current.substring(pos);
+                handleContentChangeRef.current(newContent);
+              } catch {
+                // fallback
+              }
+            }
+          }
+        });
+      } catch (e) {
+        console.error("Failed to register drag-drop handler:", e);
       }
+    })();
 
-      const insertText = insertions.join("\n");
-      const pos = textarea.selectionStart;
-      const newContent =
-        contentRef.current.substring(0, pos) +
-        insertText +
-        contentRef.current.substring(pos);
-      handleContentChange(newContent);
-    },
-    [handleContentChange]
-  );
+    return () => { unlisten?.(); };
+  }, []);
 
   // --- Keyboard shortcuts ---
   useEffect(() => {
@@ -1477,8 +1541,6 @@ function App() {
                 <div
                   className="editor-panel"
                   style={{ flex: `0 0 ${editorRatio}%` }}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
                 >
                   <div className="editor-panel-header">
                     <span>Markdown ソース</span>

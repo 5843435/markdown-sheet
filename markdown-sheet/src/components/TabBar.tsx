@@ -30,16 +30,18 @@ const TabBar: FC<Props> = ({ tabs, activeTabId, onSelectTab, onCloseTab, onNewTa
               {tab.dirty ? " *" : ""}
             </span>
             <button
+              type="button"
               className="tab-close-btn"
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 if (tab.dirty) {
                   if (!window.confirm(`"${name}" の変更は保存されていません。閉じますか？`)) return;
                 }
                 onCloseTab(tab.id);
               }}
               title="タブを閉じる"
-              disabled={tabs.length === 1}
+              disabled={tabs.length <= 1}
             >
               ×
             </button>
