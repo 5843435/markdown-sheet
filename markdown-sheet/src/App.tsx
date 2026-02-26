@@ -918,23 +918,28 @@ function App() {
       const table = tables[tableIndex];
       if (!table) return;
 
-      const rows = [table.headers, ...table.rows];
-      const csv = rows
-        .map((row) =>
-          row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(",")
-        )
-        .join("\r\n");
-
       try {
+        const rows = [table.headers, ...table.rows];
+        const csv = rows
+          .map((row) =>
+            row.map((cell) => `"${(cell ?? "").replace(/"/g, '""')}"`).join(",")
+          )
+          .join("\r\n");
+
+        // ファイル名に使えない文字を除去
+        const safeName = (table.heading || `table${tableIndex + 1}`)
+          .replace(/[\\/:*?"<>|]/g, "_");
+
         const path = await save({
           filters: [{ name: "CSV", extensions: ["csv"] }],
-          defaultPath: `${table.heading || `table${tableIndex + 1}`}.csv`,
+          defaultPath: `${safeName}.csv`,
         });
         if (path) {
           await writeTextFile(path, "\uFEFF" + csv); // BOM for Excel
           showToast("CSVをエクスポートしました");
         }
       } catch (e) {
+        console.error("CSV export error:", e);
         showToast("CSVエクスポートに失敗しました", true);
       }
     },
