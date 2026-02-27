@@ -868,7 +868,11 @@ function App() {
     const el = previewRef.current;
     if (!el) return;
     try {
-      const htmlContent = el.innerHTML;
+      // Clone DOM and strip Mermaid UI controls (zoom, SVG buttons, AI panel)
+      // that don't function in standalone HTML
+      const clone = el.cloneNode(true) as HTMLElement;
+      clone.querySelectorAll(".mermaid-actions, .mermaid-ai-panel").forEach((n) => n.remove());
+      const htmlContent = clone.innerHTML;
       const title = activeFile
         ? activeFile.split(/[\\/]/).pop() || "document"
         : "document";
