@@ -24,5 +24,9 @@ markdown-sheet/node_modules/
 markdown-sheet/dist/
 markdown-sheet/build/
 
+# Claude Code
+.claude/
+
 # Misc
 *.log
+Thumbs.db
