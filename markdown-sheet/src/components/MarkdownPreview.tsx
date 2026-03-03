@@ -2,6 +2,7 @@ import { type FC, useEffect, useRef, useState } from "react";
 import type { AiSettings } from "../types";
 import { callAI } from "../lib/callAI";
 import { marked } from "marked";
+import { readFile } from "@tauri-apps/plugin-fs";
 import hljs from "highlight.js";
 import "highlight.js/styles/atom-one-dark.css";
 import mermaid from "mermaid";
@@ -131,6 +132,7 @@ const FONT_MAP: Record<string, string> = {
 
 interface Props {
   content: string;
+  filePath?: string | null;
   previewRef?: React.RefObject<HTMLDivElement | null>;
   aiSettings?: AiSettings;
   onUpdateMermaidBlock?: (blockIndex: number, newSource: string) => void;
@@ -138,6 +140,7 @@ interface Props {
 
 const MarkdownPreview: FC<Props> = ({
   content,
+  filePath,
   previewRef: externalRef,
   aiSettings,
   onUpdateMermaidBlock,
@@ -196,10 +199,58 @@ const MarkdownPreview: FC<Props> = ({
   // HTML を mdContentRef に手動で書き込む。
   // dangerouslySetInnerHTML を使わないことで React の reconciliation から切り離し、
   // StrictMode の remount 時に innerHTML がリセットされる問題を回避する。
+  // また、相対画像パスをローカルファイルから blob URL に変換する。
+  const blobUrlsRef = useRef<string[]>([]);
   useEffect(() => {
+    // 前回の blob URL を解放
+    for (const url of blobUrlsRef.current) URL.revokeObjectURL(url);
+    blobUrlsRef.current = [];
+
     const div = mdContentRef.current;
-    if (div) div.innerHTML = html;
-  }, [html]);
+    if (!div) return;
+    div.innerHTML = html;
+
+    if (!filePath) return;
+    const dir = filePath.replace(/[\\/][^\\/]+$/, "");
+    const imgs = Array.from(div.querySelectorAll<HTMLImageElement>("img"));
+    const blobUrls = blobUrlsRef.current;
+
+    (async () => {
+      for (const img of imgs) {
+        const src = img.getAttribute("src");
+        if (!src) continue;
+        if (/^(https?:|data:|blob:)/i.test(src)) continue;
+
+        // 相対パスを絶対パスに解決
+        const combined = dir.replace(/\\/g, "/") + "/" + src;
+        const parts = combined.split("/");
+        const resolved: string[] = [];
+        for (const p of parts) {
+          if (p === "..") resolved.pop();
+          else if (p !== ".") resolved.push(p);
+        }
+        const absolutePath = resolved.join("/");
+
+        try {
+          const data = await readFile(absolutePath);
+          const ext = src.split(".").pop()?.toLowerCase() ?? "";
+          const mime =
+            ext === "svg" ? "image/svg+xml" :
+            ext === "png" ? "image/png" :
+            ext === "gif" ? "image/gif" :
+            ext === "webp" ? "image/webp" :
+            ext === "bmp" ? "image/bmp" :
+            "image/jpeg";
+          const blob = new Blob([data], { type: mime });
+          const url = URL.createObjectURL(blob);
+          blobUrls.push(url);
+          img.src = url;
+        } catch {
+          // ファイルが見つからない場合はスキップ
+        }
+      }
+    })();
+  }, [html, filePath]);
 
   // Mermaid ブロック + KaTeX をレンダリング
   useEffect(() => {
