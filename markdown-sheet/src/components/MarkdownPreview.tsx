@@ -217,9 +217,12 @@ const MarkdownPreview: FC<Props> = ({
 
     (async () => {
       for (const img of imgs) {
-        const src = img.getAttribute("src");
-        if (!src) continue;
-        if (/^(https?:|data:|blob:)/i.test(src)) continue;
+        const rawSrc = img.getAttribute("src");
+        if (!rawSrc) continue;
+        if (/^(https?:|data:|blob:)/i.test(rawSrc)) continue;
+
+        // marked が URL エンコードした日本語パスをデコードしてファイルシステムパスに戻す
+        const src = decodeURIComponent(rawSrc);
 
         // 相対パスを絶対パスに解決
         const combined = dir.replace(/\\/g, "/") + "/" + src;

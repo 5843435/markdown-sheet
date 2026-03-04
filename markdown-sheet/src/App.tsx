@@ -316,6 +316,18 @@ function App() {
     })();
   }, [officeViewer, folderPath]);
 
+  // ファイルツリーを再取得するコールバック
+  const refreshFileTree = useCallback(async () => {
+    if (!folderPath) return;
+    try {
+      const entries: FileEntry[] = await invoke("get_file_tree", {
+        dirPath: folderPath,
+        includeOffice: officeViewer,
+      });
+      setFileTree(entries);
+    } catch { /* ignore */ }
+  }, [folderPath, officeViewer]);
+
   // --- Recent files ---
   const [recentFiles, setRecentFiles] = useState<RecentFile[]>(() => {
     try {
@@ -1777,6 +1789,7 @@ function App() {
               officeFileData={officeFileData}
               officeFileType={officeFileType}
               onOpenFile={loadFile}
+              onRefreshFileTree={refreshFileTree}
             />
           </div>
         ) : activeViewTab === "preview" ? (
@@ -1947,6 +1960,7 @@ function App() {
               officeFileData={officeFileData}
               officeFileType={officeFileType}
               onOpenFile={loadFile}
+              onRefreshFileTree={refreshFileTree}
             />
           </div>
         ) : (

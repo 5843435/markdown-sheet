@@ -17,6 +17,7 @@ interface Props {
   officeFileData?: Uint8Array | null;
   officeFileType?: string | null;
   onOpenFile?: (path: string) => void;
+  onRefreshFileTree?: () => void;
 }
 
 export default function PreviewPanel({
@@ -30,6 +31,7 @@ export default function PreviewPanel({
   officeFileData,
   officeFileType,
   onOpenFile,
+  onRefreshFileTree,
 }: Props) {
   const [activeTab, setActiveTab] = useState<"preview" | "terminal">("preview");
   const [converting, setConverting] = useState(false);
@@ -47,6 +49,7 @@ export default function PreviewPanel({
     setConverting(true);
     try {
       const { mdPath } = await docxToMarkdown(officeFileData, filePath);
+      onRefreshFileTree?.();
       onOpenFile?.(mdPath);
     } catch (e) {
       alert(`変換に失敗しました: ${e instanceof Error ? e.message : e}`);
