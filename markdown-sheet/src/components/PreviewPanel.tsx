@@ -3,6 +3,7 @@ import MarkdownPreview from "./MarkdownPreview";
 import OfficePreview from "./OfficePreview";
 import Terminal from "./Terminal";
 import type { AiSettings } from "../types";
+import { docxToMarkdown } from "../lib/docxToMarkdown";
 import "./PreviewPanel.css";
 
 interface Props {
@@ -15,6 +16,7 @@ interface Props {
   theme: "light" | "dark";
   officeFileData?: Uint8Array | null;
   officeFileType?: string | null;
+  onOpenFile?: (path: string) => void;
 }
 
 export default function PreviewPanel({
@@ -27,8 +29,10 @@ export default function PreviewPanel({
   theme,
   officeFileData,
   officeFileType,
+  onOpenFile,
 }: Props) {
   const [activeTab, setActiveTab] = useState<"preview" | "terminal">("preview");
+  const [converting, setConverting] = useState(false);
 
   // Extract directory from filePath for terminal cwd, fall back to open folder path
   const cwd = filePath
@@ -36,6 +40,20 @@ export default function PreviewPanel({
     : folderPath ?? "C:\\";
 
   const isOffice = officeFileData && officeFileType;
+  const isDocx = filePath?.toLowerCase().endsWith(".docx");
+
+  const handleConvertToMarkdown = async () => {
+    if (!officeFileData || !filePath) return;
+    setConverting(true);
+    try {
+      const { mdPath } = await docxToMarkdown(officeFileData, filePath);
+      onOpenFile?.(mdPath);
+    } catch (e) {
+      alert(`変換に失敗しました: ${e instanceof Error ? e.message : e}`);
+    } finally {
+      setConverting(false);
+    }
+  };
 
   return (
     <div className="preview-panel-wrapper">
@@ -53,6 +71,16 @@ export default function PreviewPanel({
           ターミナル
         </button>
       </div>
+      {isOffice && isDocx && activeTab === "preview" && (
+        <div className="preview-convert-bar">
+          <button
+            onClick={handleConvertToMarkdown}
+            disabled={converting}
+          >
+            {converting ? "変換中..." : "Markdownに変換"}
+          </button>
+        </div>
+      )}
       <div className="preview-panel-content">
         <div style={{ display: activeTab === "preview" ? "contents" : "none" }}>
           {isOffice ? (

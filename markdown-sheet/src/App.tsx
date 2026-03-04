@@ -1776,6 +1776,7 @@ function App() {
               theme={theme}
               officeFileData={officeFileData}
               officeFileType={officeFileType}
+              onOpenFile={loadFile}
             />
           </div>
         ) : activeViewTab === "preview" ? (
@@ -1945,6 +1946,7 @@ function App() {
               theme={theme}
               officeFileData={officeFileData}
               officeFileType={officeFileType}
+              onOpenFile={loadFile}
             />
           </div>
         ) : (

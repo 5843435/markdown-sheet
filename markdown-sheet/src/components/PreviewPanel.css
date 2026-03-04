@@ -37,6 +37,36 @@
   font-weight: 600;
 }
 
+.preview-convert-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: var(--bg-overlay);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.preview-convert-bar button {
+  padding: 3px 12px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.preview-convert-bar button:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.preview-convert-bar button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .preview-panel-content {
   flex: 1;
   display: flex;
