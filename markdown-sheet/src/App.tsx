@@ -426,7 +426,7 @@ function App() {
       editor.removeEventListener("scroll", syncFromEditor);
       preview.removeEventListener("scroll", syncFromPreview);
     };
-  }, [syncScroll, editorVisible, activeViewTab]);
+  }, [syncScroll, editorVisible, activeViewTab, officeFileData, officeFileType]);
 
   // ====== Tab Management ======
 
@@ -467,9 +467,19 @@ function App() {
       setContentUndoAvailable(newTab.contentUndoStack.length > 0);
       setContentRedoAvailable(newTab.contentRedoStack.length > 0);
       reset(newTab.tables);
-      // Office状態をクリア（loadFile側で再設定される）
+      // Officeファイルの場合はデータを再読み込み、それ以外はクリア
       const officeExt = newTab.filePath ? getOfficeExt(newTab.filePath) : null;
-      if (!officeExt) {
+      if (officeExt && newTab.filePath) {
+        readFile(newTab.filePath)
+          .then((bytes) => {
+            setOfficeFileData(new Uint8Array(bytes));
+            setOfficeFileType(officeExt);
+          })
+          .catch(() => {
+            setOfficeFileData(null);
+            setOfficeFileType(null);
+          });
+      } else {
         setOfficeFileData(null);
         setOfficeFileType(null);
       }
