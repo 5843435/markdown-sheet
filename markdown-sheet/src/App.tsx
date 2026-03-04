@@ -1981,6 +1981,7 @@ function App() {
         content={content}
         autoSave={autoSave}
         onToggleAutoSave={() => setAutoSave((v) => !v)}
+        activeFilePath={activeFile}
       />
 
       {/* Settings modal */}
