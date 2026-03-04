@@ -1,0 +1,22 @@
+{
+  "id": "zebra",
+  "name": "斑马纹",
+  "name_en": "Zebra",
+  "description": "奇偶行不同背景色，无边框",
+  "description_en": "Alternating row colors, no borders",
+  "border": {
+    "headerBottom": {
+      "width": "1pt",
+      "style": "single"
+    }
+  },
+  "header": {
+    "fontWeight": "bold"
+  },
+  "cell": {
+    "padding": "8pt"
+  },
+  "zebra": {
+    "enabled": true
+  }
+}

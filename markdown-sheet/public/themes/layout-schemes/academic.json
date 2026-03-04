@@ -1,0 +1,40 @@
+{
+  "id": "academic",
+  "name": "学术论文",
+  "name_en": "Academic",
+  "description": "层级平缓的布局，适合学术论文和正式文档",
+  "description_en": "Gradual hierarchy layout for academic papers and formal documents",
+  
+  "body": {
+    "fontSize": "12pt",
+    "lineHeight": 1.75
+  },
+  
+  "headings": {
+    "h1": { "fontSize": "18pt", "spacingBefore": "0pt", "spacingAfter": "16pt" },
+    "h2": { "fontSize": "16pt", "spacingBefore": "16pt", "spacingAfter": "10pt" },
+    "h3": { "fontSize": "14pt", "spacingBefore": "14pt", "spacingAfter": "8pt" },
+    "h4": { "fontSize": "13pt", "spacingBefore": "12pt", "spacingAfter": "6pt" },
+    "h5": { "fontSize": "12pt", "spacingBefore": "10pt", "spacingAfter": "5pt" },
+    "h6": { "fontSize": "12pt", "spacingBefore": "8pt", "spacingAfter": "4pt" }
+  },
+  
+  "code": {
+    "fontSize": "10pt"
+  },
+  
+  "blocks": {
+    "paragraph": { "spacingAfter": "10pt" },
+    "list": { "spacingAfter": "13pt" },
+    "listItem": { "spacingAfter": "3pt" },
+    "blockquote": { 
+      "spacingBefore": "10pt",
+      "spacingAfter": "10pt",
+      "paddingVertical": "1pt",
+      "paddingHorizontal": "13pt"
+    },
+    "codeBlock": { "spacingAfter": "12pt" },
+    "table": { "spacingAfter": "12pt" },
+    "horizontalRule": { "spacingBefore": "20pt", "spacingAfter": "20pt" }
+  }
+}

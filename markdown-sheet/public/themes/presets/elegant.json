@@ -1,0 +1,22 @@
+{
+  "id": "elegant",
+  "name": "优雅文艺",
+  "name_en": "Elegant Literary",
+  "description": "Georgia 字体，优雅的文学风格",
+  "description_en": "Georgia font with elegant literary style",
+  "author": "Markdown Viewer Extension",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "Georgia"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Monaco"
+    }
+  },
+  "layoutScheme": "book",
+  "colorScheme": "sakura",
+  "tableStyle": "borderless",
+  "codeTheme": "colorful"
+}

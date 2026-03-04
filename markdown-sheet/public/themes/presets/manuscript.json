@@ -1,0 +1,22 @@
+{
+  "id": "manuscript",
+  "name": "手稿风格",
+  "name_en": "Manuscript",
+  "description": "学术手稿感，适合论文草稿和研究笔记",
+  "description_en": "Academic manuscript style for paper drafts and research notes",
+  "author": "Markdown Viewer Extension",
+  "version": "2.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "Palatino Linotype"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Consolas"
+    }
+  },
+  "layoutScheme": "academic",
+  "colorScheme": "sepia",
+  "tableStyle": "borderless",
+  "codeTheme": "warm-book"
+}

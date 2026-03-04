@@ -1,0 +1,34 @@
+{
+  "id": "ocean",
+  "name": "海洋清新",
+  "name_en": "Ocean",
+  "description": "蓝绿色系，清爽自然的海洋风格",
+  "description_en": "Blue-green scheme for fresh and natural ocean styles",
+  
+  "text": {
+    "primary": "#164e63",
+    "secondary": "#155e75",
+    "muted": "#0e7490"
+  },
+  
+  "accent": {
+    "link": "#0e7490",
+    "linkHover": "#155e75"
+  },
+  
+  "background": {
+    "code": "#ecfeff"
+  },
+  
+  "blockquote": {
+    "border": "#22d3ee"
+  },
+  
+  "table": {
+    "border": "#22d3ee",
+    "headerBackground": "#a5f3fc",
+    "headerText": "#164e63",
+    "zebraEven": "#ecfeff",
+    "zebraOdd": "#f0fdfa"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "verdana",
+  "name": "网页显示",
+  "name_en": "Web Display",
+  "description": "Verdana 字体，屏幕显示清晰锐利",
+  "description_en": "Verdana font with clear and sharp screen display",
+  "author": "Markdown Viewer Extension",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "Verdana"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Monaco"
+    }
+  },
+  "layoutScheme": "document",
+  "colorScheme": "cool",
+  "tableStyle": "grid",
+  "codeTheme": "cool-modern"
+}

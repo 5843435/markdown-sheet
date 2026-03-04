@@ -1,0 +1,22 @@
+{
+  "id": "garamond",
+  "name": "长文阅读",
+  "name_en": "Long Reading",
+  "description": "Georgia 字体，舒适的长文阅读体验",
+  "description_en": "Georgia font for comfortable long-form reading",
+  "author": "Markdown Viewer Extension",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "Garamond"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Monaco"
+    }
+  },
+  "layoutScheme": "book",
+  "colorScheme": "warm",
+  "tableStyle": "borderless",
+  "codeTheme": "warm-book"
+}

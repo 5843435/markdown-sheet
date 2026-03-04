@@ -1,0 +1,184 @@
+{
+  "fonts": {
+    "Times New Roman": {
+      "name": "Times New Roman",
+      "displayName": "Times New Roman",
+      "webFallback": "'Times New Roman', Times, Georgia, serif, SimSun, STSong",
+      "docx": {
+        "ascii": "Times New Roman",
+        "eastAsia": "SimSun"
+      }
+    },
+    "Arial": {
+      "name": "Arial",
+      "displayName": "Arial",
+      "webFallback": "Arial, Helvetica, 'Helvetica Neue', sans-serif, SimHei, STHeiti",
+      "docx": {
+        "ascii": "Arial",
+        "eastAsia": "SimHei"
+      }
+    },
+    "Georgia": {
+      "name": "Georgia",
+      "displayName": "Georgia",
+      "webFallback": "Georgia, 'Times New Roman', Times, serif, SimSun, STSong",
+      "docx": {
+        "ascii": "Georgia",
+        "eastAsia": "SimSun"
+      }
+    },
+    "Monaco": {
+      "name": "Monaco",
+      "displayName": "Monaco",
+      "webFallback": "Monaco, 'Courier New', monospace, FangSong, STFangsong, 'Zhuque Fangsong'",
+      "docx": {
+        "ascii": "Consolas",
+        "eastAsia": "FangSong"
+      }
+    },
+    "Courier New": {
+      "name": "Courier New",
+      "displayName": "Courier New",
+      "webFallback": "'Courier New', Courier, Monaco, FangSong, STFangsong, 'Zhuque Fangsong', monospace",
+      "docx": {
+        "ascii": "Courier New",
+        "eastAsia": "FangSong"
+      }
+    },
+    "SimSun": {
+      "name": "SimSun",
+      "displayName": "宋体 (SimSun)",
+      "webFallback": "'Times New Roman', serif, SimSun, STSong",
+      "docx": {
+        "ascii": "Times New Roman",
+        "eastAsia": "SimSun"
+      }
+    },
+    "SimHei": {
+      "name": "SimHei",
+      "displayName": "黑体 (SimHei)",
+      "webFallback": "Arial, sans-serif, SimHei, STHeiti",
+      "docx": {
+        "ascii": "Arial",
+        "eastAsia": "SimHei"
+      }
+    },
+    "FangSong": {
+      "name": "FangSong",
+      "displayName": "仿宋 (FangSong)",
+      "webFallback": "FangSong, STFangsong, 'Zhuque Fangsong', Georgia, 'Times New Roman', serif",
+      "docx": {
+        "ascii": "Georgia",
+        "eastAsia": "FangSong"
+      }
+    },
+    "Palatino": {
+      "name": "Palatino",
+      "displayName": "Palatino",
+      "webFallback": "Palatino, Georgia, 'Times New Roman', serif, STSong, SimSun",
+      "docx": {
+        "ascii": "Palatino Linotype",
+        "eastAsia": "SimSun"
+      }
+    },
+    "Verdana": {
+      "name": "Verdana",
+      "displayName": "Verdana",
+      "webFallback": "Verdana, Geneva, Tahoma, Arial, sans-serif, SimHei",
+      "docx": {
+        "ascii": "Verdana",
+        "eastAsia": "SimHei"
+      }
+    },
+    "Tahoma": {
+      "name": "Tahoma",
+      "displayName": "Tahoma",
+      "webFallback": "Tahoma, Verdana, Arial, sans-serif, SimHei",
+      "docx": {
+        "ascii": "Tahoma",
+        "eastAsia": "SimHei"
+      }
+    },
+    "Trebuchet MS": {
+      "name": "Trebuchet MS",
+      "displayName": "Trebuchet MS",
+      "webFallback": "'Trebuchet MS', Tahoma, Arial, sans-serif, SimHei",
+      "docx": {
+        "ascii": "Trebuchet MS",
+        "eastAsia": "SimHei"
+      }
+    },
+    "Comic Sans MS": {
+      "name": "Comic Sans MS",
+      "displayName": "Comic Sans MS",
+      "webFallback": "'Comic Sans MS', 'Comic Neue', 'Marker Felt', FangSong, STFangsong, 'Zhuque Fangsong'",
+      "docx": {
+        "ascii": "Comic Sans MS",
+        "eastAsia": "FangSong"
+      }
+    },
+    "Impact": {
+      "name": "Impact",
+      "displayName": "Impact",
+      "webFallback": "Impact, 'Arial Black', Arial, sans-serif, SimHei",
+      "docx": {
+        "ascii": "Impact",
+        "eastAsia": "SimHei"
+      }
+    },
+    "Lucida Grande": {
+      "name": "Lucida Grande",
+      "displayName": "Lucida Grande",
+      "webFallback": "'Lucida Grande', Geneva, Verdana, Arial, sans-serif, STHeiti, SimHei",
+      "docx": {
+        "ascii": "Lucida Sans Unicode",
+        "eastAsia": "SimHei"
+      }
+    },
+    "Palatino Linotype": {
+      "name": "Palatino Linotype",
+      "displayName": "Palatino Linotype",
+      "webFallback": "'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, 'Times New Roman', serif, SimSun, STSong",
+      "docx": {
+        "ascii": "Palatino Linotype",
+        "eastAsia": "SimSun"
+      }
+    },
+    "Consolas": {
+      "name": "Consolas",
+      "displayName": "Consolas",
+      "webFallback": "Consolas, Monaco, 'Courier New', monospace, FangSong, STFangsong, 'Zhuque Fangsong'",
+      "docx": {
+        "ascii": "Consolas",
+        "eastAsia": "FangSong"
+      }
+    },
+    "Garamond": {
+      "name": "Garamond",
+      "displayName": "Garamond",
+      "webFallback": "Garamond, 'Times New Roman', Georgia, serif, SimSun, STSong",
+      "docx": {
+        "ascii": "Garamond",
+        "eastAsia": "SimSun"
+      }
+    },
+    "Helvetica Neue": {
+      "name": "Helvetica Neue",
+      "displayName": "Helvetica Neue",
+      "webFallback": "'Helvetica Neue', Helvetica, Arial, sans-serif, SimHei, STHeiti",
+      "docx": {
+        "ascii": "Arial",
+        "eastAsia": "SimHei"
+      }
+    },
+    "Century Gothic": {
+      "name": "Century Gothic",
+      "displayName": "Century Gothic",
+      "webFallback": "'Century Gothic', 'Apple Gothic', Arial, sans-serif, SimHei, STHeiti",
+      "docx": {
+        "ascii": "Century Gothic",
+        "eastAsia": "SimHei"
+      }
+    }
+  }
+}

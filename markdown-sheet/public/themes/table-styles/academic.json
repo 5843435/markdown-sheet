@@ -1,0 +1,30 @@
+{
+  "id": "academic",
+  "name": "学术风格",
+  "name_en": "Academic",
+  "description": "双线表头 + 单线分隔，适合论文和学术文档",
+  "description_en": "Double-line header + single-line separators, ideal for papers and academic documents",
+  "border": {
+    "headerTop": {
+      "width": "1.5pt",
+      "style": "double"
+    },
+    "headerBottom": {
+      "width": "1.5pt",
+      "style": "single"
+    },
+    "lastRowBottom": {
+      "width": "1.5pt",
+      "style": "single"
+    }
+  },
+  "header": {
+    "fontWeight": "bold"
+  },
+  "cell": {
+    "padding": "6pt"
+  },
+  "zebra": {
+    "enabled": false
+  }
+}

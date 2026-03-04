@@ -1,0 +1,22 @@
+{
+  "id": "water",
+  "name": "水墨诗意",
+  "name_en": "Ink Poetry",
+  "description": "仿宋字体，中国传统水墨美学",
+  "description_en": "FangSong font with traditional Chinese ink aesthetics",
+  "author": "Markdown Viewer Extension",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "FangSong"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Courier New"
+    }
+  },
+  "layoutScheme": "book",
+  "colorScheme": "sepia",
+  "tableStyle": "borderless",
+  "codeTheme": "warm-book"
+}

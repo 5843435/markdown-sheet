@@ -1,0 +1,34 @@
+{
+  "id": "candy",
+  "name": "糖果甜心",
+  "name_en": "Candy",
+  "description": "粉橙色系，甜美可爱的糖果风格",
+  "description_en": "Pink-orange scheme for sweet and adorable candy styles",
+  
+  "text": {
+    "primary": "#881337",
+    "secondary": "#9f1239",
+    "muted": "#be123c"
+  },
+  
+  "accent": {
+    "link": "#e11d48",
+    "linkHover": "#be123c"
+  },
+  
+  "background": {
+    "code": "#fff1f2"
+  },
+  
+  "blockquote": {
+    "border": "#fda4af"
+  },
+  
+  "table": {
+    "border": "#fda4af",
+    "headerBackground": "#fecdd3",
+    "headerText": "#881337",
+    "zebraEven": "#fff1f2",
+    "zebraOdd": "#fff7ed"
+  }
+}

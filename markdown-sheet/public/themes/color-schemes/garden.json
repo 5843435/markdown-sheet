@@ -1,0 +1,34 @@
+{
+  "id": "garden",
+  "name": "花园清新",
+  "name_en": "Garden",
+  "description": "粉绿色系，清新可爱的花园风格",
+  "description_en": "Pink-green scheme for fresh and lovely garden styles",
+  
+  "text": {
+    "primary": "#701a75",
+    "secondary": "#86198f",
+    "muted": "#a21caf"
+  },
+  
+  "accent": {
+    "link": "#047857",
+    "linkHover": "#065f46"
+  },
+  
+  "background": {
+    "code": "#fdf2f8"
+  },
+  
+  "blockquote": {
+    "border": "#4ade80"
+  },
+  
+  "table": {
+    "border": "#4ade80",
+    "headerBackground": "#dcfce7",
+    "headerText": "#166534",
+    "zebraEven": "#f0fdf4",
+    "zebraOdd": "#fefce8"
+  }
+}

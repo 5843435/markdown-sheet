@@ -1,0 +1,22 @@
+{
+  "id": "coral",
+  "name": "珊瑚活力",
+  "name_en": "Coral Vibrant",
+  "description": "温暖橙粉色系，友好亲和的活力风格",
+  "description_en": "Warm coral-pink for friendly and vibrant style",
+  "author": "Markdown Viewer Team",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "Verdana"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Consolas"
+    }
+  },
+  "layoutScheme": "book",
+  "colorScheme": "coral",
+  "tableStyle": "minimal-gray",
+  "codeTheme": "colorful"
+}

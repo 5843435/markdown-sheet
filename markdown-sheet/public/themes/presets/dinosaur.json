@@ -1,0 +1,23 @@
+{
+  "id": "dinosaur",
+  "name": "恐龙探险",
+  "name_en": "Dinosaur",
+  "description": "绿橙探险，活力恐龙风格",
+  "description_en": "Green-orange adventurous dinosaur style",
+  "author": "Markdown Viewer Team",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "Arial"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Consolas"
+    }
+  },
+  "layoutScheme": "student",
+  "colorScheme": "dino",
+  "tableStyle": "grid",
+  "codeTheme": "colorful",
+  "diagramStyle": "handDrawn"
+}

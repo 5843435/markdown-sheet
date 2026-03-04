@@ -1,0 +1,23 @@
+{
+  "id": "space",
+  "name": "太空探索",
+  "name_en": "Space",
+  "description": "蓝橙科幻，太空探索风格",
+  "description_en": "Blue-orange sci-fi space exploration style",
+  "author": "Markdown Viewer Team",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "Arial"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Consolas"
+    }
+  },
+  "layoutScheme": "student",
+  "colorScheme": "space",
+  "tableStyle": "modern-tech",
+  "codeTheme": "cool-modern",
+  "diagramStyle": "handDrawn"
+}

@@ -1,0 +1,22 @@
+{
+  "id": "technical",
+  "name": "技术文档",
+  "name_en": "Technical",
+  "description": "专为技术文档设计，清晰简洁的极简风格",
+  "description_en": "Designed for technical documentation with clean minimalist style",
+  "author": "Markdown Viewer Extension",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "Arial"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Monaco"
+    }
+  },
+  "layoutScheme": "technical",
+  "colorScheme": "cool",
+  "tableStyle": "modern-tech",
+  "codeTheme": "cool-modern"
+}

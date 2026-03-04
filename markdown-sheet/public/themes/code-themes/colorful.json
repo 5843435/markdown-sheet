@@ -1,0 +1,32 @@
+{
+  "id": "colorful",
+  "name": "多彩活力",
+  "description": "多彩配色方案，活力友好",
+  "description_en": "Colorful scheme, vibrant and friendly",
+  
+  "foreground": "#383a42",
+  "colors": {
+    "keyword": "#a626a4",
+    "built_in": "#c18401",
+    "literal": "#0184bb",
+    "number": "#986801",
+    "operator": "#383a42",
+    "string": "#50a14f",
+    "title": "#4078f2",
+    "attr": "#986801",
+    "comment": "#a0a1a7",
+    "meta": "#4078f2",
+    "params": "#383a42",
+    "symbol": "#e45649",
+    "type": "#c18401",
+    "addition": "#50a14f",
+    "deletion": "#e45649",
+    "quote": "#a0a1a7",
+    "regexp": "#50a14f",
+    "selector_tag": "#e45649",
+    "selector_id": "#4078f2",
+    "selector_class": "#c18401",
+    "variable": "#e45649",
+    "property": "#4078f2"
+  }
+}

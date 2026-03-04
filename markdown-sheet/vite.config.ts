@@ -15,7 +15,7 @@ export default defineConfig(async () => ({
       : undefined,
   },
   optimizeDeps: {
-    include: ["mermaid", "highlight.js"],
+    include: ["mermaid", "highlight.js", "docx"],
     exclude: [
       "@tauri-apps/api",
       "@tauri-apps/plugin-dialog",

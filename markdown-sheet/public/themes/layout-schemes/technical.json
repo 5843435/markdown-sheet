@@ -1,0 +1,40 @@
+{
+  "id": "technical",
+  "name": "技术文档",
+  "name_en": "Technical",
+  "description": "紧凑高效的布局，适合技术文档和API文档",
+  "description_en": "Compact and efficient layout for technical and API documentation",
+  
+  "body": {
+    "fontSize": "11pt",
+    "lineHeight": 1.4
+  },
+  
+  "headings": {
+    "h1": { "fontSize": "18pt", "spacingBefore": "0pt", "spacingAfter": "10pt" },
+    "h2": { "fontSize": "15pt", "spacingBefore": "14pt", "spacingAfter": "7pt" },
+    "h3": { "fontSize": "13pt", "spacingBefore": "12pt", "spacingAfter": "6pt" },
+    "h4": { "fontSize": "12pt", "spacingBefore": "10pt", "spacingAfter": "5pt" },
+    "h5": { "fontSize": "11pt", "spacingBefore": "8pt", "spacingAfter": "4pt" },
+    "h6": { "fontSize": "11pt", "spacingBefore": "6pt", "spacingAfter": "3pt" }
+  },
+  
+  "code": {
+    "fontSize": "10pt"
+  },
+  
+  "blocks": {
+    "paragraph": { "spacingAfter": "8pt" },
+    "list": { "spacingAfter": "10pt" },
+    "listItem": { "spacingAfter": "2pt" },
+    "blockquote": { 
+      "spacingBefore": "8pt",
+      "spacingAfter": "8pt",
+      "paddingVertical": "1pt",
+      "paddingHorizontal": "12pt"
+    },
+    "codeBlock": { "spacingAfter": "10pt" },
+    "table": { "spacingAfter": "10pt" },
+    "horizontalRule": { "spacingBefore": "16pt", "spacingAfter": "16pt" }
+  }
+}

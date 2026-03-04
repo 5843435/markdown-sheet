@@ -1,0 +1,22 @@
+{
+  "id": "default",
+  "name": "标准文档",
+  "name_en": "Standard",
+  "description": "Times New Roman 字体，适合正式文档和论文",
+  "description_en": "Times New Roman font for formal documents and papers",
+  "author": "Markdown Viewer Extension",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "Times New Roman"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Monaco"
+    }
+  },
+  "layoutScheme": "document",
+  "colorScheme": "neutral",
+  "tableStyle": "grid",
+  "codeTheme": "light-clean"
+}

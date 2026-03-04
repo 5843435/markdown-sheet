@@ -916,6 +916,32 @@ function App() {
     }
   }, [activeFile]);
 
+  // --- DOCX Export ---
+  const handleExportDocx = useCallback(async () => {
+    const content = contentRef.current;
+    if (!content) return;
+    try {
+      const { exportMarkdownToDocx } = await import("./lib/docx/docx-exporter");
+      const title = activeFile
+        ? activeFile.split(/[\\/]/).pop() || "document"
+        : "document";
+      const path = await save({
+        filters: [{ name: "Word Document", extensions: ["docx"] }],
+        defaultPath: `${title.replace(/\.md$/i, "")}.docx`,
+      });
+      if (path) {
+        const docxData = await exportMarkdownToDocx(content, {
+          baseDir: activeFile || undefined,
+        });
+        await writeFile(path, docxData);
+        showToast("DOCXをエクスポートしました");
+      }
+    } catch (error) {
+      console.error("DOCX export error:", error);
+      showToast("DOCXエクスポートに失敗しました", true);
+    }
+  }, [activeFile]);
+
   // --- CSV Export ---
   const handleExportCsv = useCallback(
     async (tableIndex: number) => {
@@ -1464,6 +1490,7 @@ function App() {
         onToggleTheme={toggleTheme}
         onExportPdf={handleExportPdf}
         onExportHtml={handleExportHtml}
+        onExportDocx={handleExportDocx}
         onCopyRichText={handleCopyRichText}
         onPasteFromClipboard={handlePasteFromClipboard}
         onToggleEditor={() => setEditorVisible((v) => !v)}

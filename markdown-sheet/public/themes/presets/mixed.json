@@ -1,0 +1,24 @@
+{
+  "id": "mixed",
+  "name": "中英混排",
+  "name_en": "Mixed Languages",
+  "description": "宋体正文配 Georgia 标题，中英文混排优化",
+  "description_en": "Song body with Georgia headings for mixed content",
+  "author": "Markdown Viewer Extension",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "SimSun"
+    },
+    "headings": {
+      "fontFamily": "Georgia"
+    },
+    "code": {
+      "fontFamily": "Monaco"
+    }
+  },
+  "layoutScheme": "book",
+  "colorScheme": "warm",
+  "tableStyle": "grid",
+  "codeTheme": "warm-book"
+}
