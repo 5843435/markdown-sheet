@@ -10,7 +10,16 @@ jobs:
     permissions:
       contents: write
 
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            args: ""
+          - platform: macos-latest
+            args: "--target universal-apple-darwin"
+
+    runs-on: ${{ matrix.platform }}
 
     steps:
       - uses: actions/checkout@v4
@@ -20,6 +29,8 @@ jobs:
           node-version: 20
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: Install frontend dependencies
         run: npm install
@@ -34,7 +45,17 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: '${{ github.ref_name }}'
           releaseBody: |
-            ## インストール方法
-            `markdown-sheet_*_x64_en-US.msi` をダウンロードして実行してください。
+            ## Install
+
+            ### Windows
+            Download and run `Markdown.Studio_*_x64-setup.exe` or `Markdown.Studio_*_x64_en-US.msi`.
+
+            ### macOS
+            ```
+            brew tap M-Igashi/tap
+            brew install --cask markdown-studio
+            ```
+            Or download the `.dmg` file from assets below.
           releaseDraft: false
           prerelease: false
+          args: ${{ matrix.args }}
