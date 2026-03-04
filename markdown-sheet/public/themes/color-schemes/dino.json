@@ -1,0 +1,34 @@
+{
+  "id": "dino",
+  "name": "恐龙探险",
+  "name_en": "Dinosaur",
+  "description": "绿橙色系，活力探索的恐龙风格",
+  "description_en": "Green-orange scheme for adventurous dinosaur styles",
+  
+  "text": {
+    "primary": "#365314",
+    "secondary": "#3f6212",
+    "muted": "#65a30d"
+  },
+  
+  "accent": {
+    "link": "#4d7c0f",
+    "linkHover": "#3f6212"
+  },
+  
+  "background": {
+    "code": "#f7fee7"
+  },
+  
+  "blockquote": {
+    "border": "#a3e635"
+  },
+  
+  "table": {
+    "border": "#a3e635",
+    "headerBackground": "#bef264",
+    "headerText": "#365314",
+    "zebraEven": "#f7fee7",
+    "zebraOdd": "#fff7ed"
+  }
+}

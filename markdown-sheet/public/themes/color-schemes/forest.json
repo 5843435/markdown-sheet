@@ -1,0 +1,34 @@
+{
+  "id": "forest",
+  "name": "森林自然",
+  "name_en": "Forest",
+  "description": "绿色系，自然环保的森林风格",
+  "description_en": "Green scheme for natural and eco-friendly forest styles",
+  
+  "text": {
+    "primary": "#14532d",
+    "secondary": "#166534",
+    "muted": "#4d7c0f"
+  },
+  
+  "accent": {
+    "link": "#15803d",
+    "linkHover": "#166534"
+  },
+  
+  "background": {
+    "code": "#f0fdf4"
+  },
+  
+  "blockquote": {
+    "border": "#4ade80"
+  },
+  
+  "table": {
+    "border": "#4ade80",
+    "headerBackground": "#bbf7d0",
+    "headerText": "#14532d",
+    "zebraEven": "#f0fdf4",
+    "zebraOdd": "#fefce8"
+  }
+}

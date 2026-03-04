@@ -21,6 +21,7 @@ interface Props {
   onToggleTheme: () => void;
   onExportPdf: () => void;
   onExportHtml: () => void;
+  onExportDocx: () => void;
   onCopyRichText: () => void;
   onPasteFromClipboard: () => void;
   onToggleEditor: () => void;
@@ -46,6 +47,7 @@ const Toolbar: FC<Props> = ({
   onToggleTheme,
   onExportPdf,
   onExportHtml,
+  onExportDocx,
   onCopyRichText,
   onPasteFromClipboard,
   onToggleEditor,
@@ -162,6 +164,9 @@ const Toolbar: FC<Props> = ({
             </button>
             <button onClick={onExportHtml} title="HTMLとしてエクスポート">
               HTML
+            </button>
+            <button onClick={onExportDocx} title="DOCXとしてエクスポート">
+              DOCX
             </button>
           </>
         )}

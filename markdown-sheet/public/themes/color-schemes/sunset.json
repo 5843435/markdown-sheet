@@ -1,0 +1,34 @@
+{
+  "id": "sunset",
+  "name": "日落暖阳",
+  "name_en": "Sunset",
+  "description": "橙黄色系，温暖舒适的日落风格",
+  "description_en": "Orange-yellow scheme for warm and cozy sunset styles",
+  
+  "text": {
+    "primary": "#431407",
+    "secondary": "#7c2d12",
+    "muted": "#c2410c"
+  },
+  
+  "accent": {
+    "link": "#c2410c",
+    "linkHover": "#9a3412"
+  },
+  
+  "background": {
+    "code": "#fff7ed"
+  },
+  
+  "blockquote": {
+    "border": "#fdba74"
+  },
+  
+  "table": {
+    "border": "#fdba74",
+    "headerBackground": "#fed7aa",
+    "headerText": "#431407",
+    "zebraEven": "#fff7ed",
+    "zebraOdd": "#fffbeb"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "id": "space",
+  "name": "太空探索",
+  "name_en": "Space",
+  "description": "蓝橙色系，科幻好奇的太空风格",
+  "description_en": "Blue-orange scheme for sci-fi space exploration styles",
+  
+  "text": {
+    "primary": "#1e3a8a",
+    "secondary": "#1e40af",
+    "muted": "#3b82f6"
+  },
+  
+  "accent": {
+    "link": "#4f46e5",
+    "linkHover": "#4338ca"
+  },
+  
+  "background": {
+    "code": "#eff6ff"
+  },
+  
+  "blockquote": {
+    "border": "#93c5fd"
+  },
+  
+  "table": {
+    "border": "#93c5fd",
+    "headerBackground": "#bfdbfe",
+    "headerText": "#1e3a8a",
+    "zebraEven": "#eff6ff",
+    "zebraOdd": "#fff7ed"
+  }
+}

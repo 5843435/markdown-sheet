@@ -1,0 +1,34 @@
+{
+  "id": "cool",
+  "name": "冷色调",
+  "name_en": "Cool",
+  "description": "清爽的蓝色系，适合技术和科技风格",
+  "description_en": "Cool blue scheme for technical and modern styles",
+  
+  "text": {
+    "primary": "#0f172a",
+    "secondary": "#334155",
+    "muted": "#64748b"
+  },
+  
+  "accent": {
+    "link": "#0077b6",
+    "linkHover": "#005f92"
+  },
+  
+  "background": {
+    "code": "#f0f9ff"
+  },
+  
+  "blockquote": {
+    "border": "#7dd3fc"
+  },
+  
+  "table": {
+    "border": "#7dd3fc",
+    "headerBackground": "#e0f2fe",
+    "headerText": "#0c4a6e",
+    "zebraEven": "#f0f9ff",
+    "zebraOdd": "#ffffff"
+  }
+}

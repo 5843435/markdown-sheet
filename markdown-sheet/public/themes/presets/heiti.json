@@ -1,0 +1,22 @@
+{
+  "id": "heiti",
+  "name": "现代黑体",
+  "name_en": "Hei Style",
+  "description": "黑体字体，现代简约风格",
+  "description_en": "Hei font with modern minimal style",
+  "author": "Markdown Viewer Extension",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "SimHei"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Monaco"
+    }
+  },
+  "layoutScheme": "document",
+  "colorScheme": "neutral",
+  "tableStyle": "grid",
+  "codeTheme": "light-clean"
+}

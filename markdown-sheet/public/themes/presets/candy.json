@@ -1,0 +1,23 @@
+{
+  "id": "candy",
+  "name": "糖果甜心",
+  "name_en": "Candy",
+  "description": "糖果甜心，甜美可爱风格",
+  "description_en": "Sweet and adorable candy style",
+  "author": "Markdown Viewer Team",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "Trebuchet MS"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Consolas"
+    }
+  },
+  "layoutScheme": "student",
+  "colorScheme": "candy",
+  "tableStyle": "zebra",
+  "codeTheme": "colorful",
+  "diagramStyle": "handDrawn"
+}

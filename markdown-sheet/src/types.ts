@@ -55,7 +55,7 @@ export interface AiSettings {
   apiKey: string;
   model: string;
   baseUrl: string;
-  apiFormat: "openai" | "anthropic";
+  apiFormat: "openai" | "anthropic" | "azure";
 }
 
 /** エディタタブ1つ分の保存状態 */

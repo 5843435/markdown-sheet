@@ -1,0 +1,22 @@
+{
+  "id": "grid",
+  "name": "网格样式",
+  "name_en": "Grid Style",
+  "description": "完整边框，表头浅灰背景，斑马纹",
+  "description_en": "Full borders, light gray header, zebra stripes",
+  "border": {
+    "all": {
+      "width": "1pt",
+      "style": "single"
+    }
+  },
+  "header": {
+    "fontWeight": "bold"
+  },
+  "cell": {
+    "padding": "8pt"
+  },
+  "zebra": {
+    "enabled": true
+  }
+}

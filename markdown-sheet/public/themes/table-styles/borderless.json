@@ -1,0 +1,26 @@
+{
+  "id": "borderless",
+  "name": "无边框",
+  "name_en": "Borderless",
+  "description": "仅表头有下边框",
+  "description_en": "Only header has bottom border",
+  "border": {
+    "headerBottom": {
+      "width": "2pt",
+      "style": "single"
+    },
+    "lastRowBottom": {
+      "width": "1pt",
+      "style": "single"
+    }
+  },
+  "header": {
+    "fontWeight": "bold"
+  },
+  "cell": {
+    "padding": "8pt"
+  },
+  "zebra": {
+    "enabled": false
+  }
+}

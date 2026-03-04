@@ -1,0 +1,22 @@
+{
+  "id": "business",
+  "name": "商务报告",
+  "name_en": "Business",
+  "description": "Calibri 字体，现代商务风格，层次清晰",
+  "description_en": "Calibri font with modern business style and clear hierarchy",
+  "author": "Markdown Viewer Extension",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "Arial"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Monaco"
+    }
+  },
+  "layoutScheme": "document",
+  "colorScheme": "neutral",
+  "tableStyle": "professional",
+  "codeTheme": "business-contrast"
+}

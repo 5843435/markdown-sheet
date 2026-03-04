@@ -13,13 +13,21 @@
     "@tauri-apps/api": "^2.2.0",
     "@tauri-apps/plugin-dialog": "^2.2.0",
     "@tauri-apps/plugin-fs": "^2.2.0",
+    "docx": "^9.1.1",
     "highlight.js": "^11.11.1",
     "html2pdf.js": "^0.14.0",
     "katex": "^0.16.28",
     "marked": "^17.0.2",
+    "mathjax-full": "^3.2.2",
     "mermaid": "^11.12.2",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "remark-gfm": "^4.0.0",
+    "remark-math": "^6.0.0",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.0.0",
+    "xml-js": "^1.6.11"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.2.0",
