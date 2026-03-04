@@ -1,0 +1,24 @@
+{
+  "id": "academic",
+  "name": "学术论文",
+  "name_en": "Academic",
+  "description": "宋体正文配黑体标题，中文学术规范",
+  "description_en": "Song body with Hei headings, Chinese academic standard",
+  "author": "Markdown Viewer Extension",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "SimSun"
+    },
+    "headings": {
+      "fontFamily": "SimHei"
+    },
+    "code": {
+      "fontFamily": "Monaco"
+    }
+  },
+  "layoutScheme": "academic",
+  "colorScheme": "neutral",
+  "tableStyle": "academic",
+  "codeTheme": "light-clean"
+}

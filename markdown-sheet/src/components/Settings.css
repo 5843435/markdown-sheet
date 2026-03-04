@@ -145,6 +145,23 @@
 .settings-detect-msg.ok  { color: var(--accent-green); }
 .settings-detect-msg.err { color: var(--accent-red); }
 
+/* トグル行 */
+.settings-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+.settings-toggle-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
 /* フッター */
 .settings-footer {
   display: flex;

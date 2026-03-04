@@ -1,0 +1,31 @@
+{
+  "id": "cool-modern",
+  "name": "冷色现代",
+  "description": "现代冷色调配色，专业简洁",
+  "description_en": "Modern cool-toned colors, professional and clean",
+  
+  "foreground": "#263238",
+  "colors": {
+    "keyword": "#0277bd",
+    "built_in": "#00838f",
+    "literal": "#00897b",
+    "number": "#f57c00",
+    "string": "#00897b",
+    "title": "#1976d2",
+    "attr": "#00838f",
+    "comment": "#90a4ae",
+    "meta": "#5e35b1",
+    "params": "#263238",
+    "symbol": "#d32f2f",
+    "type": "#00838f",
+    "addition": "#388e3c",
+    "deletion": "#d32f2f",
+    "quote": "#90a4ae",
+    "regexp": "#00897b",
+    "selector_tag": "#0277bd",
+    "selector_id": "#1976d2",
+    "selector_class": "#00838f",
+    "variable": "#5e35b1",
+    "property": "#1976d2"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "id": "sepia",
+  "name": "复古棕",
+  "name_en": "Sepia",
+  "description": "怀旧的泛黄色调，适合打字机和手稿风格",
+  "description_en": "Nostalgic sepia tones for typewriter and manuscript styles",
+  
+  "text": {
+    "primary": "#292524",
+    "secondary": "#57534e",
+    "muted": "#78716c"
+  },
+  
+  "accent": {
+    "link": "#a16207",
+    "linkHover": "#854d0e"
+  },
+  
+  "background": {
+    "code": "#faf5ef"
+  },
+  
+  "blockquote": {
+    "border": "#a8a29e"
+  },
+  
+  "table": {
+    "border": "#a8a29e",
+    "headerBackground": "#f5f0e6",
+    "headerText": "#292524",
+    "zebraEven": "#faf5ef",
+    "zebraOdd": "#fcf9f3"
+  }
+}

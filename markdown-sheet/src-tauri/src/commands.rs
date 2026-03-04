@@ -12,8 +12,22 @@ pub struct FileEntry {
     pub children: Option<Vec<FileEntry>>,
 }
 
-/// ディレクトリを再帰的に読み取り、.md ファイルとフォルダのみ返す
-fn read_dir_recursive(dir: &Path, depth: u32) -> Vec<FileEntry> {
+/// 対象ファイルかどうか判定
+fn is_target_file(name: &str, include_office: bool) -> bool {
+    if name.ends_with(".md") {
+        return true;
+    }
+    if include_office {
+        let lower = name.to_lowercase();
+        if lower.ends_with(".docx") || lower.ends_with(".xlsx") || lower.ends_with(".xlsm") {
+            return true;
+        }
+    }
+    false
+}
+
+/// ディレクトリを再帰的に読み取り、対象ファイルとフォルダのみ返す
+fn read_dir_recursive(dir: &Path, depth: u32, include_office: bool) -> Vec<FileEntry> {
     if depth > 5 {
         return Vec::new();
     }
@@ -35,8 +49,8 @@ fn read_dir_recursive(dir: &Path, depth: u32) -> Vec<FileEntry> {
         }
 
         if path.is_dir() {
-            let children = read_dir_recursive(&path, depth + 1);
-            // .md を含むフォルダのみ表示
+            let children = read_dir_recursive(&path, depth + 1, include_office);
+            // 対象ファイルを含むフォルダのみ表示
             if !children.is_empty() {
                 entries.push(FileEntry {
                     name,
@@ -45,7 +59,7 @@ fn read_dir_recursive(dir: &Path, depth: u32) -> Vec<FileEntry> {
                     children: Some(children),
                 });
             }
-        } else if name.ends_with(".md") {
+        } else if is_target_file(&name, include_office) {
             entries.push(FileEntry {
                 name,
                 path: path.to_string_lossy().to_string(),
@@ -59,12 +73,12 @@ fn read_dir_recursive(dir: &Path, depth: u32) -> Vec<FileEntry> {
 
 /// ディレクトリのファイルツリーを取得する Tauri コマンド
 #[tauri::command]
-pub fn get_file_tree(dir_path: String) -> Result<Vec<FileEntry>, String> {
+pub fn get_file_tree(dir_path: String, include_office: Option<bool>) -> Result<Vec<FileEntry>, String> {
     let path = Path::new(&dir_path);
     if !path.exists() || !path.is_dir() {
         return Err("ディレクトリが存在しません".to_string());
     }
-    Ok(read_dir_recursive(path, 0))
+    Ok(read_dir_recursive(path, 0, include_office.unwrap_or(false)))
 }
 
 /// Markdown ファイルを読み込んでパースする Tauri コマンド

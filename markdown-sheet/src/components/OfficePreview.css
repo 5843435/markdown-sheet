@@ -1,0 +1,104 @@
+.office-preview {
+  height: 100%;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* docx container */
+.office-docx-container {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+}
+
+.office-docx-container .docx-wrapper {
+  background: #fff;
+  padding: 20px;
+  max-width: 100%;
+}
+
+.office-preview--dark .office-docx-container .docx-wrapper {
+  background: #1e1e1e;
+  color: #d4d4d4;
+}
+
+/* xlsx container */
+.office-xlsx-container {
+  flex: 1;
+  overflow: auto;
+  padding: 8px;
+}
+
+.office-xlsx-container table {
+  border-collapse: collapse;
+  width: max-content;
+  min-width: 100%;
+  font-size: 13px;
+  font-family: "Consolas", "Monaco", monospace;
+}
+
+.office-xlsx-container th,
+.office-xlsx-container td {
+  border: 1px solid var(--border, #dfe2e5);
+  padding: 4px 8px;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.office-xlsx-container th {
+  background: var(--bg-overlay, #f6f8fa);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.office-preview--dark .office-xlsx-container th {
+  background: #2d2d2d;
+}
+
+.office-preview--dark .office-xlsx-container td {
+  border-color: #444;
+}
+
+/* sheet tabs */
+.office-sheet-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border, #dfe2e5);
+  padding: 0 8px;
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.office-sheet-tab {
+  padding: 6px 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  font-family: var(--font-main);
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.office-sheet-tab:hover {
+  color: var(--text, #333);
+}
+
+.office-sheet-tab.active {
+  color: var(--primary, #9333ea);
+  border-bottom-color: var(--primary, #9333ea);
+  font-weight: 600;
+}
+
+/* error */
+.office-error {
+  padding: 24px;
+  color: var(--accent-red, #e53e3e);
+  font-size: 14px;
+  text-align: center;
+}

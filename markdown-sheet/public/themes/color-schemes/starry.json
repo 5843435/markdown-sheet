@@ -1,0 +1,34 @@
+{
+  "id": "starry",
+  "name": "星空梦幻",
+  "name_en": "Starry",
+  "description": "蓝紫色系，梦幻童趣的星空风格",
+  "description_en": "Blue-purple scheme for dreamy starry styles",
+  
+  "text": {
+    "primary": "#4c1d95",
+    "secondary": "#5b21b6",
+    "muted": "#7c3aed"
+  },
+  
+  "accent": {
+    "link": "#a21caf",
+    "linkHover": "#86198f"
+  },
+  
+  "background": {
+    "code": "#eef2ff"
+  },
+  
+  "blockquote": {
+    "border": "#a5b4fc"
+  },
+  
+  "table": {
+    "border": "#a5b4fc",
+    "headerBackground": "#c7d2fe",
+    "headerText": "#1e1b4b",
+    "zebraEven": "#f5f3ff",
+    "zebraOdd": "#faf5ff"
+  }
+}

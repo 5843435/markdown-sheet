@@ -1,0 +1,43 @@
+{
+  "id": "rainbow",
+  "name": "彩虹多彩",
+  "name_en": "Rainbow",
+  "description": "各级标题不同颜色，活泼童趣的多彩风格",
+  "description_en": "Multi-colored headings for vibrant and playful styles",
+  
+  "text": {
+    "primary": "#1e1b4b",
+    "secondary": "#3730a3",
+    "muted": "#6366f1"
+  },
+  
+  "accent": {
+    "link": "#7c3aed",
+    "linkHover": "#6d28d9"
+  },
+  
+  "background": {
+    "code": "#eef2ff"
+  },
+  
+  "blockquote": {
+    "border": "#a5b4fc"
+  },
+  
+  "table": {
+    "border": "#a5b4fc",
+    "headerBackground": "#e0e7ff",
+    "headerText": "#1e1b4b",
+    "zebraEven": "#faf5ff",
+    "zebraOdd": "#ffffff"
+  },
+  
+  "headings": {
+    "h1": "#ef4444",
+    "h2": "#f97316",
+    "h3": "#eab308",
+    "h4": "#22c55e",
+    "h5": "#3b82f6",
+    "h6": "#8b5cf6"
+  }
+}

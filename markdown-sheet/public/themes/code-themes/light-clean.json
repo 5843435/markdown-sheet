@@ -1,0 +1,31 @@
+{
+  "id": "light-clean",
+  "name": "清爽亮色",
+  "description": "清爽的浅色配色方案，适合日常使用",
+  "description_en": "Clean light color scheme for daily use",
+  
+  "foreground": "#24292e",
+  "colors": {
+    "keyword": "#d73a49",
+    "built_in": "#e36209",
+    "literal": "#005cc5",
+    "number": "#005cc5",
+    "string": "#032f62",
+    "title": "#6f42c1",
+    "attr": "#005cc5",
+    "comment": "#6a737d",
+    "meta": "#005cc5",
+    "params": "#24292e",
+    "symbol": "#e36209",
+    "type": "#d73a49",
+    "addition": "#22863a",
+    "deletion": "#b31d28",
+    "quote": "#22863a",
+    "regexp": "#032f62",
+    "selector_tag": "#22863a",
+    "selector_id": "#005cc5",
+    "selector_class": "#005cc5",
+    "variable": "#e36209",
+    "property": "#005cc5"
+  }
+}

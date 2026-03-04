@@ -21,6 +21,8 @@
     {
       "identifier": "fs:scope",
       "allow": [{ "path": "**" }]
-    }
+    },
+    "core:event:allow-listen",
+    "core:event:allow-emit"
   ]
 }

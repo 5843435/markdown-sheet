@@ -1,0 +1,40 @@
+{
+  "id": "book",
+  "name": "书籍排版",
+  "name_en": "Book",
+  "description": "舒适阅读的布局，适合长文档和书籍",
+  "description_en": "Comfortable reading layout for long documents and books",
+  
+  "body": {
+    "fontSize": "12pt",
+    "lineHeight": 1.6
+  },
+  
+  "headings": {
+    "h1": { "fontSize": "22pt", "spacingBefore": "0pt", "spacingAfter": "14pt" },
+    "h2": { "fontSize": "18pt", "spacingBefore": "18pt", "spacingAfter": "10pt" },
+    "h3": { "fontSize": "16pt", "spacingBefore": "16pt", "spacingAfter": "8pt" },
+    "h4": { "fontSize": "14pt", "spacingBefore": "14pt", "spacingAfter": "7pt" },
+    "h5": { "fontSize": "13pt", "spacingBefore": "12pt", "spacingAfter": "6pt" },
+    "h6": { "fontSize": "12pt", "spacingBefore": "10pt", "spacingAfter": "5pt" }
+  },
+  
+  "code": {
+    "fontSize": "10pt"
+  },
+  
+  "blocks": {
+    "paragraph": { "spacingAfter": "12pt" },
+    "list": { "spacingAfter": "14pt" },
+    "listItem": { "spacingAfter": "4pt" },
+    "blockquote": { 
+      "spacingBefore": "12pt",
+      "spacingAfter": "12pt",
+      "paddingVertical": "2pt",
+      "paddingHorizontal": "15pt"
+    },
+    "codeBlock": { "spacingAfter": "14pt" },
+    "table": { "spacingAfter": "14pt" },
+    "horizontalRule": { "spacingBefore": "24pt", "spacingAfter": "24pt" }
+  }
+}

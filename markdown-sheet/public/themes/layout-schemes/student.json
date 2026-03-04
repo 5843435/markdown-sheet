@@ -1,0 +1,40 @@
+{
+  "id": "student",
+  "name": "学生文档",
+  "name_en": "Student",
+  "description": "大字号大行距，适合学生作文和笔记",
+  "description_en": "Large font and spacing for student essays and notes",
+  
+  "body": {
+    "fontSize": "14pt",
+    "lineHeight": 1.8
+  },
+  
+  "headings": {
+    "h1": { "fontSize": "24pt", "spacingBefore": "0pt", "spacingAfter": "16pt" },
+    "h2": { "fontSize": "20pt", "spacingBefore": "20pt", "spacingAfter": "12pt" },
+    "h3": { "fontSize": "18pt", "spacingBefore": "18pt", "spacingAfter": "10pt" },
+    "h4": { "fontSize": "16pt", "spacingBefore": "16pt", "spacingAfter": "8pt" },
+    "h5": { "fontSize": "15pt", "spacingBefore": "14pt", "spacingAfter": "7pt" },
+    "h6": { "fontSize": "14pt", "spacingBefore": "12pt", "spacingAfter": "6pt" }
+  },
+  
+  "code": {
+    "fontSize": "12pt"
+  },
+  
+  "blocks": {
+    "paragraph": { "spacingAfter": "14pt" },
+    "list": { "spacingAfter": "16pt" },
+    "listItem": { "spacingAfter": "6pt" },
+    "blockquote": { 
+      "spacingBefore": "14pt",
+      "spacingAfter": "14pt",
+      "paddingVertical": "4pt",
+      "paddingHorizontal": "18pt"
+    },
+    "codeBlock": { "spacingAfter": "16pt" },
+    "table": { "spacingAfter": "16pt" },
+    "horizontalRule": { "spacingBefore": "28pt", "spacingAfter": "28pt" }
+  }
+}

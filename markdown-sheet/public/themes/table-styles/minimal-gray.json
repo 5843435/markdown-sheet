@@ -1,0 +1,26 @@
+{
+  "id": "minimal-gray",
+  "name": "极简灰调",
+  "name_en": "Minimal Gray",
+  "description": "仅横向边框 + 灰色调 + 简洁美观",
+  "description_en": "Horizontal borders only + gray tones + clean look",
+  "border": {
+    "headerBottom": {
+      "width": "1.5pt",
+      "style": "single"
+    },
+    "rowBottom": {
+      "width": "1pt",
+      "style": "single"
+    }
+  },
+  "header": {
+    "fontWeight": "bold"
+  },
+  "cell": {
+    "padding": "8pt"
+  },
+  "zebra": {
+    "enabled": false
+  }
+}

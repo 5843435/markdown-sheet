@@ -1,0 +1,40 @@
+{
+  "id": "document",
+  "name": "通用文档",
+  "name_en": "Document",
+  "description": "平衡适中的布局，适合日常文档",
+  "description_en": "Balanced layout for everyday documents",
+  
+  "body": {
+    "fontSize": "12pt",
+    "lineHeight": 1.5
+  },
+  
+  "headings": {
+    "h1": { "fontSize": "22pt", "spacingBefore": "0pt", "spacingAfter": "12pt", "alignment": "center" },
+    "h2": { "fontSize": "18pt", "spacingBefore": "16pt", "spacingAfter": "8pt" },
+    "h3": { "fontSize": "16pt", "spacingBefore": "14pt", "spacingAfter": "7pt" },
+    "h4": { "fontSize": "14pt", "spacingBefore": "12pt", "spacingAfter": "6pt" },
+    "h5": { "fontSize": "13pt", "spacingBefore": "10pt", "spacingAfter": "5pt" },
+    "h6": { "fontSize": "12pt", "spacingBefore": "8pt", "spacingAfter": "4pt" }
+  },
+  
+  "code": {
+    "fontSize": "10pt"
+  },
+  
+  "blocks": {
+    "paragraph": { "spacingAfter": "10pt" },
+    "list": { "spacingAfter": "13pt" },
+    "listItem": { "spacingAfter": "3pt" },
+    "blockquote": { 
+      "spacingBefore": "10pt",
+      "spacingAfter": "10pt",
+      "paddingVertical": "1pt",
+      "paddingHorizontal": "13pt"
+    },
+    "codeBlock": { "spacingAfter": "12pt" },
+    "table": { "spacingAfter": "12pt" },
+    "horizontalRule": { "spacingBefore": "20pt", "spacingAfter": "20pt" }
+  }
+}

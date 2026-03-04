@@ -1,0 +1,34 @@
+{
+  "id": "modern-tech",
+  "name": "现代科技",
+  "name_en": "Modern Tech",
+  "description": "蓝色主题 + 圆角边框，适合技术文档和产品说明",
+  "description_en": "Blue theme with rounded borders, ideal for tech docs and product guides",
+  "border": {
+    "headerTop": {
+      "width": "2pt",
+      "style": "single"
+    },
+    "headerBottom": {
+      "width": "2pt",
+      "style": "single"
+    },
+    "rowBottom": {
+      "width": "1pt",
+      "style": "single"
+    },
+    "lastRowBottom": {
+      "width": "2pt",
+      "style": "single"
+    }
+  },
+  "header": {
+    "fontWeight": "bold"
+  },
+  "cell": {
+    "padding": "10pt"
+  },
+  "zebra": {
+    "enabled": false
+  }
+}

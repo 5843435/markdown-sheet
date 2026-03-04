@@ -17,6 +17,14 @@
   white-space: nowrap;
 }
 
+.status-filepath {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;
+  text-align: left;
+  max-width: 50%;
+}
+
 .status-sep {
   width: 1px;
   height: 12px;

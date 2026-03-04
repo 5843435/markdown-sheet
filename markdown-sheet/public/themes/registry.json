@@ -1,0 +1,270 @@
+{
+  "version": "2.0.0",
+  "themes": [
+    {
+      "id": "default",
+      "file": "default.json",
+      "category": "classic",
+      "featured": true,
+      "order": 1
+    },
+    {
+      "id": "academic",
+      "file": "academic.json",
+      "category": "classic",
+      "featured": true,
+      "order": 2
+    },
+    {
+      "id": "business",
+      "file": "business.json",
+      "category": "classic",
+      "featured": true,
+      "order": 3
+    },
+    {
+      "id": "manuscript",
+      "file": "manuscript.json",
+      "category": "classic",
+      "featured": false,
+      "order": 4
+    },
+    {
+      "id": "newspaper",
+      "file": "newspaper.json",
+      "category": "classic",
+      "featured": false,
+      "order": 5
+    },
+    {
+      "id": "palatino",
+      "file": "palatino.json",
+      "category": "reading",
+      "featured": true,
+      "order": 6
+    },
+    {
+      "id": "garamond",
+      "file": "garamond.json",
+      "category": "reading",
+      "featured": true,
+      "order": 7
+    },
+    {
+      "id": "typewriter",
+      "file": "typewriter.json",
+      "category": "reading",
+      "featured": true,
+      "order": 8
+    },
+    {
+      "id": "elegant",
+      "file": "elegant.json",
+      "category": "reading",
+      "featured": true,
+      "order": 9
+    },
+    {
+      "id": "technical",
+      "file": "technical.json",
+      "category": "modern",
+      "featured": true,
+      "order": 10
+    },
+    {
+      "id": "swiss",
+      "file": "swiss.json",
+      "category": "modern",
+      "featured": true,
+      "order": 11
+    },
+    {
+      "id": "minimal",
+      "file": "minimal.json",
+      "category": "modern",
+      "featured": true,
+      "order": 12
+    },
+    {
+      "id": "magazine",
+      "file": "magazine.json",
+      "category": "creative",
+      "featured": true,
+      "order": 13
+    },
+    {
+      "id": "century",
+      "file": "century.json",
+      "category": "creative",
+      "featured": true,
+      "order": 14
+    },
+    {
+      "id": "handwritten",
+      "file": "handwritten.json",
+      "category": "creative",
+      "featured": true,
+      "order": 15
+    },
+    {
+      "id": "verdana",
+      "file": "verdana.json",
+      "category": "creative",
+      "featured": true,
+      "order": 16
+    },
+    {
+      "id": "heiti",
+      "file": "heiti.json",
+      "category": "chinese",
+      "featured": true,
+      "order": 17
+    },
+    {
+      "id": "mixed",
+      "file": "mixed.json",
+      "category": "chinese",
+      "featured": false,
+      "order": 18
+    },
+    {
+      "id": "water",
+      "file": "water.json",
+      "category": "chinese",
+      "featured": true,
+      "order": 19
+    },
+    {
+      "id": "rainbow",
+      "file": "rainbow.json",
+      "category": "playful",
+      "featured": true,
+      "order": 20
+    },
+    {
+      "id": "starry",
+      "file": "starry.json",
+      "category": "playful",
+      "featured": true,
+      "order": 21
+    },
+    {
+      "id": "candy",
+      "file": "candy.json",
+      "category": "playful",
+      "featured": true,
+      "order": 22
+    },
+    {
+      "id": "dinosaur",
+      "file": "dinosaur.json",
+      "category": "playful",
+      "featured": true,
+      "order": 23
+    },
+    {
+      "id": "space",
+      "file": "space.json",
+      "category": "playful",
+      "featured": true,
+      "order": 24
+    },
+    {
+      "id": "garden",
+      "file": "garden.json",
+      "category": "playful",
+      "featured": true,
+      "order": 25
+    },
+    {
+      "id": "forest",
+      "file": "forest.json",
+      "category": "nature",
+      "featured": true,
+      "order": 26
+    },
+    {
+      "id": "ocean",
+      "file": "ocean.json",
+      "category": "nature",
+      "featured": true,
+      "order": 27
+    },
+    {
+      "id": "coral",
+      "file": "coral.json",
+      "category": "nature",
+      "featured": true,
+      "order": 28
+    },
+    {
+      "id": "sunset",
+      "file": "sunset.json",
+      "category": "nature",
+      "featured": true,
+      "order": 29
+    }
+  ],
+  "categories": {
+    "classic": {
+      "name": "经典文档",
+      "name_en": "Classic Document",
+      "description": "传统正式的文档风格，适合公文、报告、论文",
+      "description_en": "Traditional formal styles for official documents, reports, papers",
+      "order": 1
+    },
+    "reading": {
+      "name": "书籍阅读",
+      "name_en": "Book & Reading",
+      "description": "舒适的长文阅读体验，适合小说、杂志、博客",
+      "description_en": "Comfortable long-form reading for novels, magazines, blogs",
+      "order": 2
+    },
+    "modern": {
+      "name": "现代科技",
+      "name_en": "Modern Tech",
+      "description": "简洁现代的设计风格，适合技术文档、产品说明",
+      "description_en": "Clean modern design for technical docs and products",
+      "order": 3
+    },
+    "creative": {
+      "name": "创意表达",
+      "name_en": "Creative Expression",
+      "description": "富有个性的创意风格，适合博客、设计、创意写作",
+      "description_en": "Creative styles for blogs, design, creative writing",
+      "order": 4
+    },
+    "chinese": {
+      "name": "中文排版",
+      "name_en": "Chinese Typography",
+      "description": "专为中文优化的排版风格",
+      "description_en": "Typography optimized for Chinese content",
+      "order": 5
+    },
+    "playful": {
+      "name": "缤纷童趣",
+      "name_en": "Colorful & Playful",
+      "description": "活泼多彩的风格，适合学生作业、儿童内容",
+      "description_en": "Vibrant playful styles for students and kids",
+      "order": 6
+    },
+    "nature": {
+      "name": "自然色彩",
+      "name_en": "Nature Colors",
+      "description": "取自自然的配色，温暖舒适的视觉体验",
+      "description_en": "Nature-inspired colors for warm visual experience",
+      "order": 7
+    }
+  },
+  "recommendations": {
+    "default": "default",
+    "academic": "academic",
+    "business": "business",
+    "technical": "technical",
+    "reading": "garamond",
+    "book": "palatino",
+    "modern": "swiss",
+    "screen": "verdana",
+    "creative": "magazine"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "minimal",
+  "name": "极简主义",
+  "name_en": "Minimal",
+  "description": "系统字体，最简洁的排版风格，专注内容本身",
+  "description_en": "System font with minimal styling, focus on content itself",
+  "author": "Markdown Viewer Extension",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "Arial"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Monaco"
+    }
+  },
+  "layoutScheme": "document",
+  "colorScheme": "neutral",
+  "tableStyle": "borderless",
+  "codeTheme": "light-clean"
+}

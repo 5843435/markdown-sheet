@@ -1,0 +1,22 @@
+{
+  "id": "sunset",
+  "name": "日落暖阳",
+  "name_en": "Sunset Warm",
+  "description": "橙黄色系，温暖舒适的日落风格",
+  "description_en": "Orange-yellow for warm and cozy sunset style",
+  "author": "Markdown Viewer Team",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "Georgia"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Consolas"
+    }
+  },
+  "layoutScheme": "book",
+  "colorScheme": "sunset",
+  "tableStyle": "minimal-gray",
+  "codeTheme": "warm-book"
+}

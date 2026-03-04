@@ -1,0 +1,22 @@
+{
+  "id": "ocean",
+  "name": "海洋清新",
+  "name_en": "Ocean Fresh",
+  "description": "蓝绿色系，清爽自然的海洋风格",
+  "description_en": "Blue-green for fresh and natural ocean style",
+  "author": "Markdown Viewer Team",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "Trebuchet MS"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Consolas"
+    }
+  },
+  "layoutScheme": "document",
+  "colorScheme": "ocean",
+  "tableStyle": "minimal-gray",
+  "codeTheme": "cool-modern"
+}

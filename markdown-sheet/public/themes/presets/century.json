@@ -1,0 +1,22 @@
+{
+  "id": "century",
+  "name": "演示文稿",
+  "name_en": "Presentation",
+  "description": "Trebuchet MS 字体，简洁的演示风格，标题突出",
+  "description_en": "Trebuchet MS font with clean presentation style, prominent headings",
+  "author": "Markdown Viewer Extension",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "Century Gothic"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Monaco"
+    }
+  },
+  "layoutScheme": "magazine",
+  "colorScheme": "cool",
+  "tableStyle": "minimal-gray",
+  "codeTheme": "cool-modern"
+}

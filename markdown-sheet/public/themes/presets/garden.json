@@ -1,0 +1,23 @@
+{
+  "id": "garden",
+  "name": "花园清新",
+  "name_en": "Garden",
+  "description": "粉绿清新，可爱花园风格",
+  "description_en": "Pink-green fresh garden style",
+  "author": "Markdown Viewer Team",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "Verdana"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Consolas"
+    }
+  },
+  "layoutScheme": "student",
+  "colorScheme": "garden",
+  "tableStyle": "minimal-gray",
+  "codeTheme": "light-clean",
+  "diagramStyle": "handDrawn"
+}

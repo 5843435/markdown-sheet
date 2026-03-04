@@ -1,0 +1,24 @@
+{
+  "id": "newspaper",
+  "name": "报纸风格",
+  "name_en": "Newspaper",
+  "description": "传统新闻排版风格，正式严肃",
+  "description_en": "Traditional newspaper typography, formal and serious",
+  "author": "Markdown Viewer Extension",
+  "version": "2.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "Times New Roman"
+    },
+    "headings": {
+      "fontFamily": "Georgia"
+    },
+    "code": {
+      "fontFamily": "Consolas"
+    }
+  },
+  "layoutScheme": "magazine",
+  "colorScheme": "sepia",
+  "tableStyle": "grid",
+  "codeTheme": "warm-book"
+}

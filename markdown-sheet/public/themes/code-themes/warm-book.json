@@ -1,0 +1,31 @@
+{
+  "id": "warm-book",
+  "name": "温暖书卷",
+  "description": "温暖的书籍风格配色，适合长文阅读",
+  "description_en": "Warm book-style colors for long reading",
+  
+  "foreground": "#657b83",
+  "colors": {
+    "keyword": "#859900",
+    "built_in": "#b58900",
+    "literal": "#2aa198",
+    "number": "#2aa198",
+    "string": "#2aa198",
+    "title": "#268bd2",
+    "attr": "#b58900",
+    "comment": "#93a1a1",
+    "meta": "#859900",
+    "params": "#657b83",
+    "symbol": "#cb4b16",
+    "type": "#b58900",
+    "addition": "#859900",
+    "deletion": "#dc322f",
+    "quote": "#93a1a1",
+    "regexp": "#dc322f",
+    "selector_tag": "#268bd2",
+    "selector_id": "#268bd2",
+    "selector_class": "#268bd2",
+    "variable": "#268bd2",
+    "property": "#268bd2"
+  }
+}

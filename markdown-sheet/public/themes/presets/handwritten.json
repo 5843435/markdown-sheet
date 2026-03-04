@@ -1,0 +1,23 @@
+{
+  "id": "handwritten",
+  "name": "手写风格",
+  "name_en": "Handwritten",
+  "description": "手写体标题，个人化感觉，适合日记和随笔",
+  "description_en": "Handwriting style titles for personal notes and journals",
+  "author": "Markdown Viewer Extension",
+  "version": "2.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "Comic Sans MS"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Consolas"
+    }
+  },
+  "layoutScheme": "book",
+  "colorScheme": "warm",
+  "tableStyle": "borderless",
+  "codeTheme": "warm-book",
+  "diagramStyle": "handDrawn"
+}

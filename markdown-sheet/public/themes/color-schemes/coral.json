@@ -1,0 +1,34 @@
+{
+  "id": "coral",
+  "name": "珊瑚活力",
+  "name_en": "Coral",
+  "description": "温暖橙粉色系，友好亲和的活力风格",
+  "description_en": "Warm coral-pink scheme for friendly and vibrant styles",
+  
+  "text": {
+    "primary": "#450a0a",
+    "secondary": "#7f1d1d",
+    "muted": "#b91c1c"
+  },
+  
+  "accent": {
+    "link": "#dc2626",
+    "linkHover": "#b91c1c"
+  },
+  
+  "background": {
+    "code": "#fef2f2"
+  },
+  
+  "blockquote": {
+    "border": "#fca5a5"
+  },
+  
+  "table": {
+    "border": "#fca5a5",
+    "headerBackground": "#fecaca",
+    "headerText": "#450a0a",
+    "zebraEven": "#fff5f5",
+    "zebraOdd": "#fffbeb"
+  }
+}

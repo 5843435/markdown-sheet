@@ -5,14 +5,21 @@ interface Props {
   content: string;
   autoSave: boolean;
   onToggleAutoSave: () => void;
+  activeFilePath: string | null;
 }
 
-const StatusBar: FC<Props> = ({ content, autoSave, onToggleAutoSave }) => {
+const StatusBar: FC<Props> = ({ content, autoSave, onToggleAutoSave, activeFilePath }) => {
   const charCount = content.length;
   const lineCount = content ? content.split("\n").length : 0;
 
   return (
     <div className="status-bar">
+      {activeFilePath && (
+        <>
+          <span className="status-item status-filepath" title={activeFilePath}>{activeFilePath}</span>
+          <span className="status-sep" />
+        </>
+      )}
       <span className="status-item">文字数: {charCount.toLocaleString()}</span>
       <span className="status-sep" />
       <span className="status-item">行: {lineCount.toLocaleString()}</span>

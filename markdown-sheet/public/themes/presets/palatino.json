@@ -1,0 +1,22 @@
+{
+  "id": "palatino",
+  "name": "书籍出版",
+  "name_en": "Book Publishing",
+  "description": "Palatino 字体，优雅的书籍出版风格",
+  "description_en": "Palatino font with elegant book publishing style",
+  "author": "Markdown Viewer Extension",
+  "version": "1.0.0",
+  "fontScheme": {
+    "body": {
+      "fontFamily": "Palatino"
+    },
+    "headings": {},
+    "code": {
+      "fontFamily": "Monaco"
+    }
+  },
+  "layoutScheme": "book",
+  "colorScheme": "sepia",
+  "tableStyle": "minimal-gray",
+  "codeTheme": "warm-book"
+}
