@@ -193,16 +193,14 @@ const MarkdownPreview: FC<Props> = ({
     }
   }, [content]);
 
-  // HTML を mdContentRef に手動で書き込む。
-  // dangerouslySetInnerHTML を使わないことで React の reconciliation から切り離し、
-  // StrictMode の remount 時に innerHTML がリセットされる問題を回避する。
+  // HTML 書き込み → Mermaid/KaTeX レンダリングを単一 effect で実行。
+  // innerHTML 設定と placeholder 探索の間に別 effect が挟まる問題を防ぐ。
   useEffect(() => {
+    // 1) innerHTML を設定
     const div = mdContentRef.current;
     if (div) div.innerHTML = html;
-  }, [html]);
 
-  // Mermaid ブロック + KaTeX をレンダリング
-  useEffect(() => {
+    // 2) Mermaid / KaTeX をレンダリング
     const container = ref.current;
     if (!container) return;
 
