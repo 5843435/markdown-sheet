@@ -88,17 +88,22 @@ marked.use({
         return `<pre><code>${escaped}</code></pre>`;
       }
     },
-    heading({ text, depth }: { text: string; depth: number }) {
-      const id = makeHeadingId(text);
+    // heading/paragraph/listitem は this.parser.parseInline(tokens) でインライン書式を
+    // HTML に変換する必要がある。text フィールドは raw markdown のままなので使わない。
+    // アロー関数ではなく function を使って this にアクセスする。
+    heading(this: { parser: { parseInline(tokens: unknown[]): string } }, token: { text: string; depth: number; tokens: unknown[] }) {
+      const text = this.parser.parseInline(token.tokens);
+      const id = makeHeadingId(token.text);
       const m = currentHeadingMappings[headingIdx++];
       const attrs = m
         ? ` data-source-start="${fmLineCount + m.startLine}" data-source-end="${fmLineCount + m.endLine}" data-editable="true"`
         : "";
-      return `<h${depth} id="${id}"${attrs}>${text}</h${depth}>`;
+      return `<h${token.depth} id="${id}"${attrs}>${text}</h${token.depth}>`;
     },
-    paragraph({ text }: { text: string }) {
-      // math-block のみのパラグラフは編集不可
+    paragraph(this: { parser: { parseInline(tokens: unknown[]): string } }, token: { text: string; tokens: unknown[] }) {
+      const text = this.parser.parseInline(token.tokens);
       const m = currentParagraphMappings[paragraphIdx++];
+      // math-block のみのパラグラフは編集不可
       if (/^<div class="math-block"/.test(text)) {
         return `<p>${text}</p>`;
       }
@@ -107,13 +112,14 @@ marked.use({
         : "";
       return `<p${attrs}>${text}</p>`;
     },
-    listitem({ text, task, checked }: { text: string; task: boolean; checked?: boolean }) {
+    listitem(this: { parser: { parseInline(tokens: unknown[]): string } }, token: { text: string; tokens: unknown[]; task: boolean; checked?: boolean }) {
+      const text = this.parser.parseInline(token.tokens);
       const m = currentListItemMappings[listItemIdx++];
       const attrs = m
         ? ` data-source-start="${fmLineCount + m.startLine}" data-source-end="${fmLineCount + m.endLine}" data-editable="true"`
         : "";
-      const checkbox = task
-        ? `<input type="checkbox"${checked ? " checked" : ""} disabled> `
+      const checkbox = token.task
+        ? `<input type="checkbox"${token.checked ? " checked" : ""} disabled> `
         : "";
       return `<li${attrs}>${checkbox}${text}</li>\n`;
     },
