@@ -1,4 +1,4 @@
-.context-menu {
+.table-context-menu {
   position: fixed;
   z-index: 1000;
   background: var(--bg-overlay);
@@ -6,18 +6,17 @@
   border-radius: 6px;
   box-shadow: 0 4px 16px var(--shadow-strong);
   padding: 4px 0;
-  min-width: 200px;
+  min-width: 180px;
 }
 
-.ctx-group {
+.table-context-menu .ctx-group {
   display: flex;
   flex-direction: column;
 }
 
-.ctx-group button {
+.table-context-menu .ctx-group button {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   width: 100%;
   text-align: left;
   background: none;
@@ -26,31 +25,23 @@
   padding: 6px 16px;
   font-size: 13px;
   cursor: pointer;
-  gap: 24px;
   font-family: var(--font-main);
 }
 
-.ctx-group button:hover:not(:disabled) {
+.table-context-menu .ctx-group button:hover:not(:disabled) {
   background: var(--bg-surface);
 }
 
-.ctx-group button:disabled {
+.table-context-menu .ctx-group button:disabled {
   color: var(--text-muted);
   cursor: default;
 }
 
-.ctx-label {
+.table-context-menu .ctx-label {
   flex: 1;
 }
 
-.ctx-shortcut {
-  color: var(--text-muted);
-  font-size: 11px;
-  font-family: "Consolas", monospace;
-  white-space: nowrap;
-}
-
-.ctx-divider {
+.table-context-menu .ctx-divider {
   height: 1px;
   background: var(--border);
   margin: 4px 0;

@@ -1,9 +1,17 @@
 import { type FC, useEffect, useRef } from "react";
-import type { ContextMenuState } from "../types";
-import "./ContextMenu.css";
+import "./TableContextMenu.css";
+
+export interface TableContextMenuState {
+  visible: boolean;
+  x: number;
+  y: number;
+  tableIndex: number;
+  row: number; // -1 = header
+  col: number;
+}
 
 interface Props {
-  menu: ContextMenuState;
+  menu: TableContextMenuState;
   onClose: () => void;
   onAddRowAbove: () => void;
   onAddRowBelow: () => void;
@@ -11,16 +19,10 @@ interface Props {
   onAddColumnLeft: () => void;
   onAddColumnRight: () => void;
   onDeleteColumn: () => void;
-  onCopy: () => void;
-  onCut: () => void;
-  onPaste: () => void;
-  onBold: () => void;
-  onItalic: () => void;
-  onStrikethrough: () => void;
-  onCode: () => void;
+  onExportCsv: () => void;
 }
 
-const ContextMenu: FC<Props> = ({
+const TableContextMenu: FC<Props> = ({
   menu,
   onClose,
   onAddRowAbove,
@@ -29,13 +31,7 @@ const ContextMenu: FC<Props> = ({
   onAddColumnLeft,
   onAddColumnRight,
   onDeleteColumn,
-  onCopy,
-  onCut,
-  onPaste,
-  onBold,
-  onItalic,
-  onStrikethrough,
-  onCode,
+  onExportCsv,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -54,24 +50,9 @@ const ContextMenu: FC<Props> = ({
   return (
     <div
       ref={ref}
-      className="context-menu"
+      className="table-context-menu"
       style={{ left: menu.x, top: menu.y }}
     >
-      <div className="ctx-group">
-        <button onClick={onCopy}>
-          <span className="ctx-label">コピー</span>
-          <span className="ctx-shortcut">Ctrl+C</span>
-        </button>
-        <button onClick={onCut}>
-          <span className="ctx-label">カット</span>
-          <span className="ctx-shortcut">Ctrl+X</span>
-        </button>
-        <button onClick={onPaste}>
-          <span className="ctx-label">貼り付け</span>
-          <span className="ctx-shortcut">Ctrl+V</span>
-        </button>
-      </div>
-      <div className="ctx-divider" />
       <div className="ctx-group">
         <button onClick={onAddRowAbove}>
           <span className="ctx-label">行を上に挿入</span>
@@ -97,25 +78,12 @@ const ContextMenu: FC<Props> = ({
       </div>
       <div className="ctx-divider" />
       <div className="ctx-group">
-        <button onClick={onBold}>
-          <span className="ctx-label">太字</span>
-          <span className="ctx-shortcut">Ctrl+B</span>
-        </button>
-        <button onClick={onItalic}>
-          <span className="ctx-label">斜体</span>
-          <span className="ctx-shortcut">Ctrl+I</span>
-        </button>
-        <button onClick={onStrikethrough}>
-          <span className="ctx-label">取り消し線</span>
-          <span className="ctx-shortcut">Ctrl+5</span>
-        </button>
-        <button onClick={onCode}>
-          <span className="ctx-label">コード</span>
-          <span className="ctx-shortcut">Ctrl+`</span>
+        <button onClick={onExportCsv}>
+          <span className="ctx-label">CSVエクスポート</span>
         </button>
       </div>
     </div>
   );
 };
 
-export default ContextMenu;
+export default TableContextMenu;

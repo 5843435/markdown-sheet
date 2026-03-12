@@ -22,26 +22,6 @@ export interface FileEntry {
   children: FileEntry[] | null;
 }
 
-/** セルの位置 */
-export interface CellPosition {
-  tableIndex: number;
-  row: number; // -1 = ヘッダー
-  col: number;
-}
-
-/** コンテキストメニューの位置と状態 */
-export interface ContextMenuState {
-  x: number;
-  y: number;
-  visible: boolean;
-  tableIndex: number;
-  row: number;
-  col: number;
-}
-
-/** Undo/Redo 用のスナップショット */
-export type TablesSnapshot = MarkdownTable[];
-
 /** 最近開いたファイルのエントリ */
 export interface RecentFile {
   path: string;
@@ -63,8 +43,6 @@ export interface Tab {
   id: string;
   filePath: string | null;
   content: string;
-  originalLines: string[];
-  tables: MarkdownTable[];
   dirty: boolean;
   contentUndoStack: string[];
   contentRedoStack: string[];

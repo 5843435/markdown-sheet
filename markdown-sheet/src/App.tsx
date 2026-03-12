@@ -10,13 +10,10 @@ import OutlinePanel from "./components/OutlinePanel";
 import SearchReplace from "./components/SearchReplace";
 import StatusBar from "./components/StatusBar";
 import TabBar from "./components/TabBar";
-import TableEditor from "./components/TableEditor";
 import Toolbar from "./components/Toolbar";
-import { useTableEditor } from "./hooks/useTableEditor";
 import { callAI } from "./lib/callAI";
 import { makeHeadingId } from "./lib/headingId";
-import { parseMarkdown, rebuildDocument } from "./lib/markdownParser";
-import type { AiSettings, FileEntry, MarkdownTable, ParsedDocument, RecentFile, Tab } from "./types";
+import type { AiSettings, FileEntry, ParsedDocument, RecentFile, Tab } from "./types";
 
 // ========== AI & Template Constants ==========
 
@@ -193,7 +190,6 @@ const MERMAID_TEMPLATES: { label: string; code: string }[] = [
 // @ts-ignore
 import html2pdf from "html2pdf.js";
 
-type ViewTab = "preview" | "table";
 type Theme = "light" | "dark";
 
 function makeInitialTab(): Tab {
@@ -201,8 +197,6 @@ function makeInitialTab(): Tab {
     id: crypto.randomUUID(),
     filePath: null,
     content: "",
-    originalLines: [],
-    tables: [],
     dirty: false,
     contentUndoStack: [],
     contentRedoStack: [],
@@ -273,10 +267,8 @@ function App() {
   const [fileTree, setFileTree] = useState<FileEntry[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
   const [content, setContent] = useState(""); // raw markdown
-  const [originalLines, setOriginalLines] = useState<string[]>([]);
   const [dirty, setDirty] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const [activeViewTab, setActiveViewTab] = useState<ViewTab>("preview");
   const [editorVisible, setEditorVisible] = useState(true);
   const [leftPanel, setLeftPanel] = useState<"folder" | "outline">("folder");
 
@@ -317,21 +309,6 @@ function App() {
     toastTimerRef.current = setTimeout(() => setToast(null), 3000);
   };
 
-  // --- Table editor ---
-  const {
-    tables,
-    updateCell,
-    addRow,
-    deleteRow,
-    addColumn,
-    deleteColumn,
-    undo,
-    redo,
-    reset,
-    canUndo,
-    canRedo,
-  } = useTableEditor([]);
-
   // --- Editor pane ---
   const [editorRatio, setEditorRatio] = useState(40);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -349,10 +326,6 @@ function App() {
   const [contentRedoAvailable, setContentRedoAvailable] = useState(false);
 
   // --- Refs for tab switching (always latest values) ---
-  const tablesRef = useRef<MarkdownTable[]>([]);
-  tablesRef.current = tables;
-  const originalLinesRef = useRef<string[]>([]);
-  originalLinesRef.current = originalLines;
   const dirtyRef = useRef(false);
   dirtyRef.current = dirty;
   const activeTabIdRef = useRef(activeTabId);
@@ -371,7 +344,7 @@ function App() {
   }, [syncScroll]);
 
   useEffect(() => {
-    if (!syncScroll || !editorVisible || activeViewTab !== "preview") return;
+    if (!syncScroll || !editorVisible) return;
     const editor = editorRef.current;
     const preview = previewRef.current;
     if (!editor || !preview) return;
@@ -398,7 +371,7 @@ function App() {
       editor.removeEventListener("scroll", syncFromEditor);
       preview.removeEventListener("scroll", syncFromPreview);
     };
-  }, [syncScroll, editorVisible, activeViewTab]);
+  }, [syncScroll, editorVisible]);
 
   // ====== Tab Management ======
 
@@ -412,8 +385,6 @@ function App() {
           : {
               ...t,
               content: contentRef.current,
-              originalLines: originalLinesRef.current,
-              tables: structuredClone(tablesRef.current),
               dirty: dirtyRef.current,
               contentUndoStack: [...undoStackRef.current],
               contentRedoStack: [...redoStackRef.current],
@@ -431,16 +402,14 @@ function App() {
       if (!newTab) return;
       setActiveTabId(tabId);
       setContent(newTab.content);
-      setOriginalLines(newTab.originalLines);
       setDirty(newTab.dirty);
       setActiveFile(newTab.filePath);
       undoStackRef.current = [...newTab.contentUndoStack];
       redoStackRef.current = [...newTab.contentRedoStack];
       setContentUndoAvailable(newTab.contentUndoStack.length > 0);
       setContentRedoAvailable(newTab.contentRedoStack.length > 0);
-      reset(newTab.tables);
     },
-    [saveCurrentToTab, reset]
+    [saveCurrentToTab]
   );
 
   /** 新しい空タブを開く */
@@ -450,15 +419,13 @@ function App() {
     setTabs((prev) => [...prev, newTab]);
     setActiveTabId(newTab.id);
     setContent("");
-    setOriginalLines([]);
     setDirty(false);
     setActiveFile(null);
     undoStackRef.current = [];
     redoStackRef.current = [];
     setContentUndoAvailable(false);
     setContentRedoAvailable(false);
-    reset([]);
-  }, [saveCurrentToTab, reset]);
+  }, [saveCurrentToTab]);
 
   /** タブを閉じる */
   const closeTab = useCallback(
@@ -481,20 +448,18 @@ function App() {
         const idx = latestTabs.findIndex((t) => t.id === tabId);
         const newActive = remaining[Math.min(idx, remaining.length - 1)];
         setContent(newActive.content);
-        setOriginalLines(newActive.originalLines);
         setDirty(newActive.dirty);
         setActiveFile(newActive.filePath);
         undoStackRef.current = [...newActive.contentUndoStack];
         redoStackRef.current = [...newActive.contentRedoStack];
         setContentUndoAvailable(newActive.contentUndoStack.length > 0);
         setContentRedoAvailable(newActive.contentRedoStack.length > 0);
-        reset(newActive.tables);
         setActiveTabId(newActive.id);
       }
 
       setTabs(remaining);
     },
-    [reset, saveCurrentToTab]
+    [saveCurrentToTab]
   );
 
   // ====== File Loading ======
@@ -509,15 +474,13 @@ function App() {
       }
 
       try {
-        let doc: ParsedDocument;
+        let text: string;
         try {
-          doc = await invoke("read_markdown_file", { filePath });
+          const doc: ParsedDocument = await invoke("read_markdown_file", { filePath });
+          text = doc.lines.join("\n");
         } catch {
-          const text = await readTextFile(filePath);
-          doc = parseMarkdown(text);
+          text = await readTextFile(filePath);
         }
-
-        const text = doc.lines.join("\n");
 
         // 現タブが空（未編集・ファイル未割当）なら上書き、そうでなければ新タブで開く
         const currentTab = tabsRef.current.find((t) => t.id === activeTabIdRef.current);
@@ -526,8 +489,6 @@ function App() {
         if (isCurrentEmpty) {
           // 空タブに上書き
           const currentId = activeTabIdRef.current;
-          setOriginalLines(doc.lines);
-          reset(doc.tables);
           setActiveFile(filePath);
           setContent(text);
           setDirty(false);
@@ -543,8 +504,6 @@ function App() {
                     ...t,
                     filePath,
                     content: text,
-                    originalLines: doc.lines,
-                    tables: structuredClone(doc.tables),
                     dirty: false,
                     contentUndoStack: [],
                     contentRedoStack: [],
@@ -559,8 +518,6 @@ function App() {
             id: crypto.randomUUID(),
             filePath,
             content: text,
-            originalLines: doc.lines,
-            tables: structuredClone(doc.tables),
             dirty: false,
             contentUndoStack: [],
             contentRedoStack: [],
@@ -568,14 +525,12 @@ function App() {
           setTabs((prev) => [...prev, newTab]);
           setActiveTabId(newTab.id);
           setContent(text);
-          setOriginalLines(doc.lines);
           setDirty(false);
           setActiveFile(filePath);
           undoStackRef.current = [];
           redoStackRef.current = [];
           setContentUndoAvailable(false);
           setContentRedoAvailable(false);
-          reset(doc.tables);
         }
 
         addRecentFile(filePath);
@@ -584,7 +539,7 @@ function App() {
         showToast("ファイル読み込みに失敗しました", true);
       }
     },
-    [reset, switchToTab, addRecentFile, saveCurrentToTab]
+    [switchToTab, addRecentFile, saveCurrentToTab]
   );
 
   // --- Auto-save interval ---
@@ -650,36 +605,18 @@ function App() {
   const handleSave = useCallback(async () => {
     if (!activeFile) return;
     try {
-      if (activeViewTab === "table") {
-        await invoke("save_markdown_file", {
-          filePath: activeFile,
-          originalLines,
-          tables,
-        });
-      } else {
-        await writeTextFile(activeFile, content);
-      }
+      await writeTextFile(activeFile, content);
       setDirty(false);
       const currentId = activeTabIdRef.current;
       setTabs((prev) =>
         prev.map((t) => (t.id === currentId ? { ...t, dirty: false } : t))
       );
       showToast("保存しました");
-    } catch {
-      try {
-        const text =
-          activeViewTab === "table"
-            ? rebuildDocument(originalLines, tables)
-            : content;
-        await writeTextFile(activeFile, text);
-        setDirty(false);
-        showToast("保存しました");
-      } catch (e) {
-        console.error("保存エラー:", e);
-        showToast("保存に失敗しました", true);
-      }
+    } catch (e) {
+      console.error("保存エラー:", e);
+      showToast("保存に失敗しました", true);
     }
-  }, [activeFile, activeViewTab, originalLines, tables, content]);
+  }, [activeFile, content]);
 
   // --- Save As ---
   const handleSaveAs = useCallback(async () => {
@@ -695,11 +632,7 @@ function App() {
     }
     if (!selected) return;
     try {
-      const text =
-        activeViewTab === "table"
-          ? rebuildDocument(originalLines, tables)
-          : content;
-      await writeTextFile(selected, text);
+      await writeTextFile(selected, content);
       setActiveFile(selected);
       setDirty(false);
       const currentId = activeTabIdRef.current;
@@ -714,18 +647,15 @@ function App() {
       console.error("保存エラー:", e);
       showToast("保存に失敗しました", true);
     }
-  }, [activeViewTab, originalLines, tables, content, addRecentFile]);
+  }, [content, addRecentFile]);
 
   // --- Apply content (undo/redo スタックを経由しない低レベル更新) ---
   const applyContent = useCallback(
     (newContent: string) => {
       setContent(newContent);
       setDirty(true);
-      const doc = parseMarkdown(newContent);
-      setOriginalLines(doc.lines);
-      reset(doc.tables);
     },
-    [reset]
+    []
   );
 
   // --- Editor content change (undo スタックに積む) ---
@@ -741,92 +671,26 @@ function App() {
     [applyContent]
   );
 
-  // --- Unified undo/redo (content mode と table mode を切り替え) ---
+  // --- Undo/Redo ---
   const handleUndo = useCallback(() => {
-    if (activeViewTab === "table") {
-      undo();
-    } else if (undoStackRef.current.length > 0) {
+    if (undoStackRef.current.length > 0) {
       const prev = undoStackRef.current.pop()!;
       redoStackRef.current.push(contentRef.current);
       setContentUndoAvailable(undoStackRef.current.length > 0);
       setContentRedoAvailable(true);
       applyContent(prev);
     }
-  }, [activeViewTab, undo, applyContent]);
+  }, [applyContent]);
 
   const handleRedo = useCallback(() => {
-    if (activeViewTab === "table") {
-      redo();
-    } else if (redoStackRef.current.length > 0) {
+    if (redoStackRef.current.length > 0) {
       const next = redoStackRef.current.pop()!;
       undoStackRef.current.push(contentRef.current);
       setContentUndoAvailable(true);
       setContentRedoAvailable(redoStackRef.current.length > 0);
       applyContent(next);
     }
-  }, [activeViewTab, redo, applyContent]);
-
-  // --- Table cell operations ---
-  const handleUpdateCell = useCallback(
-    (tableIndex: number, row: number, col: number, value: string) => {
-      updateCell(tableIndex, row, col, value);
-      setDirty(true);
-    },
-    [updateCell]
-  );
-
-  const handleAddRow = useCallback(
-    (tableIndex: number, afterRow: number, position: "above" | "below") => {
-      addRow(tableIndex, afterRow, position);
-      setDirty(true);
-    },
-    [addRow]
-  );
-
-  const handleDeleteRow = useCallback(
-    (tableIndex: number, row: number) => {
-      deleteRow(tableIndex, row);
-      setDirty(true);
-    },
-    [deleteRow]
-  );
-
-  const handleAddColumn = useCallback(
-    (tableIndex: number, afterCol: number, position: "left" | "right") => {
-      addColumn(tableIndex, afterCol, position);
-      setDirty(true);
-    },
-    [addColumn]
-  );
-
-  const handleDeleteColumn = useCallback(
-    (tableIndex: number, col: number) => {
-      deleteColumn(tableIndex, col);
-      setDirty(true);
-    },
-    [deleteColumn]
-  );
-
-  // --- テーブル変更をエディタに反映 ---
-  useEffect(() => {
-    if (activeViewTab === "table" && dirty && originalLines.length > 0) {
-      const rebuilt = rebuildDocument(originalLines, tables);
-      setContent(rebuilt);
-    }
-  }, [tables, activeViewTab, dirty, originalLines]);
-
-  // --- タブ切替時にデータ同期 ---
-  const handleViewTabChange = useCallback(
-    (tab: ViewTab) => {
-      if (tab === "table" && activeViewTab === "preview") {
-        const doc = parseMarkdown(content);
-        setOriginalLines(doc.lines);
-        reset(doc.tables);
-      }
-      setActiveViewTab(tab);
-    },
-    [activeViewTab, content, reset]
-  );
+  }, [applyContent]);
 
   // --- Export PDF ---
   const handleExportPdf = useCallback(async () => {
@@ -846,6 +710,18 @@ function App() {
 
       showToast("PDF出力中...");
 
+      // スクロール位置を保存してリセット（html2pdf の deepCloneBasic が
+      // overflow:hidden + transform で上部コンテンツを切り落とすのを防ぐ）
+      const savedScrollTop = el.scrollTop;
+      el.scrollTop = 0;
+
+      // DOM をクローンして Mermaid UI コントロールを除去
+      const clone = el.cloneNode(true) as HTMLElement;
+      clone.querySelectorAll(".mermaid-actions, .mermaid-ai-panel").forEach((n) => n.remove());
+
+      // スクロール位置を即座に復元
+      el.scrollTop = savedScrollTop;
+
       const opt = {
         margin: 10,
         image: { type: "jpeg" as const, quality: 0.98 },
@@ -854,7 +730,7 @@ function App() {
       };
 
       // html2pdf.js で ArrayBuffer を取得し、Tauri の writeFile で保存
-      const arrayBuffer: ArrayBuffer = await html2pdf().set(opt).from(el).outputPdf("arraybuffer");
+      const arrayBuffer: ArrayBuffer = await html2pdf().set(opt).from(clone).outputPdf("arraybuffer");
       await writeFile(savePath, new Uint8Array(arrayBuffer));
       showToast("PDFを保存しました");
     } catch (error) {
@@ -915,40 +791,6 @@ function App() {
       showToast("HTMLエクスポートに失敗しました", true);
     }
   }, [activeFile]);
-
-  // --- CSV Export ---
-  const handleExportCsv = useCallback(
-    async (tableIndex: number) => {
-      const table = tables[tableIndex];
-      if (!table) return;
-
-      try {
-        const rows = [table.headers, ...table.rows];
-        const csv = rows
-          .map((row) =>
-            row.map((cell) => `"${(cell ?? "").replace(/"/g, '""')}"`).join(",")
-          )
-          .join("\r\n");
-
-        // ファイル名に使えない文字を除去
-        const safeName = (table.heading || `table${tableIndex + 1}`)
-          .replace(/[\\/:*?"<>|]/g, "_");
-
-        const path = await save({
-          filters: [{ name: "CSV", extensions: ["csv"] }],
-          defaultPath: `${safeName}.csv`,
-        });
-        if (path) {
-          await writeTextFile(path, "\uFEFF" + csv); // BOM for Excel
-          showToast("CSVをエクスポートしました");
-        }
-      } catch (e) {
-        console.error("CSV export error:", e);
-        showToast("CSVエクスポートに失敗しました", true);
-      }
-    },
-    [tables]
-  );
 
   // --- CSV Import ---
   const handleImportCsv = useCallback(async () => {
@@ -1109,6 +951,18 @@ function App() {
     [handleContentChange]
   );
 
+  // --- Inline edit (preview side) ---
+  const handleInlineEdit = useCallback(
+    (startLine: number, endLine: number, newMarkdown: string) => {
+      const lines = contentRef.current.split("\n");
+      const before = lines.slice(0, startLine);
+      const after = lines.slice(endLine + 1);
+      const newContent = [...before, ...newMarkdown.split("\n"), ...after].join("\n");
+      handleContentChange(newContent);
+    },
+    [handleContentChange]
+  );
+
   // --- Feature 3: Mermaid template insert ---
   const handleInsertTemplate = useCallback(
     (code: string) => {
@@ -1238,9 +1092,6 @@ function App() {
       redoStackRef.current = [];
       setContentUndoAvailable(false);
       setContentRedoAvailable(false);
-      const doc = parseMarkdown(text);
-      setOriginalLines(doc.lines);
-      reset(doc.tables);
       setContent(text);
       setDirty(false);
 
@@ -1258,7 +1109,7 @@ function App() {
       console.error("Clipboard read error:", error);
       showToast("クリップボードの読み取りに失敗しました", true);
     }
-  }, [reset]);
+  }, []);
 
   // --- Copy rich text ---
   const handleCopyRichText = useCallback(async () => {
@@ -1364,10 +1215,10 @@ function App() {
       } else if (e.ctrlKey && e.shiftKey && e.key === "C") {
         e.preventDefault();
         handleCopyRichText();
-      } else if (e.ctrlKey && e.key === "b" && activeViewTab === "preview") {
+      } else if (e.ctrlKey && e.key === "b") {
         e.preventDefault();
         handleInsertFormatting("bold");
-      } else if (e.ctrlKey && e.key === "i" && activeViewTab === "preview") {
+      } else if (e.ctrlKey && e.key === "i") {
         e.preventDefault();
         handleInsertFormatting("italic");
       } else if (e.ctrlKey && e.key === "\\") {
@@ -1395,7 +1246,6 @@ function App() {
     handleRedo,
     handleCopyRichText,
     handleInsertFormatting,
-    activeViewTab,
     openNewTab,
     closeTab,
   ]);
@@ -1439,9 +1289,8 @@ function App() {
     [editorRatio]
   );
 
-  // Toolbar に渡す canUndo/canRedo: モードに応じて content/table を切り替え
-  const toolbarCanUndo = activeViewTab === "table" ? canUndo : contentUndoAvailable;
-  const toolbarCanRedo = activeViewTab === "table" ? canRedo : contentRedoAvailable;
+  const toolbarCanUndo = contentUndoAvailable;
+  const toolbarCanRedo = contentRedoAvailable;
 
   return (
     <div className="app">
@@ -1450,7 +1299,6 @@ function App() {
         canUndo={toolbarCanUndo}
         canRedo={toolbarCanRedo}
         theme={theme}
-        activeViewTab={activeViewTab}
         editorVisible={editorVisible}
         recentFiles={recentFiles}
         onOpenFolder={handleOpenFolder}
@@ -1479,36 +1327,12 @@ function App() {
       />
 
       {showSearch && (
-        activeViewTab === "table" ? (
-          <SearchReplace
-            tables={tables}
-            onReplace={handleUpdateCell}
-            onClose={() => setShowSearch(false)}
-          />
-        ) : (
-          <SearchReplace
-            textContent={content}
-            onTextReplace={handleContentChange}
-            onClose={() => setShowSearch(false)}
-          />
-        )
+        <SearchReplace
+          textContent={content}
+          onTextReplace={handleContentChange}
+          onClose={() => setShowSearch(false)}
+        />
       )}
-
-      {/* View Tabs */}
-      <div className="view-tabs">
-        <button
-          className={`view-tab ${activeViewTab === "preview" ? "active" : ""}`}
-          onClick={() => handleViewTabChange("preview")}
-        >
-          プレビュー
-        </button>
-        <button
-          className={`view-tab ${activeViewTab === "table" ? "active" : ""}`}
-          onClick={() => handleViewTabChange("table")}
-        >
-          テーブル編集
-        </button>
-      </div>
 
       <div className="app-body">
         {/* 左パネル（フォルダ / アウトライン） */}
@@ -1538,182 +1362,169 @@ function App() {
           )}
         </div>
 
-        {activeViewTab === "preview" ? (
-          /* Preview mode: Editor + Preview */
-          <div
-            className="content-area"
-            style={{ display: "flex", flexDirection: "row" }}
-            ref={containerRef}
-          >
-            {editorVisible && (
-              <>
-                <div
-                  className="editor-panel"
-                  style={{ flex: `0 0 ${editorRatio}%` }}
-                >
-                  <div className="editor-panel-header">
-                    <span>Markdown ソース</span>
-                    <button
-                      className={`sync-scroll-btn ${syncScroll ? "active" : ""}`}
-                      onClick={() => setSyncScroll((v) => !v)}
-                      title={syncScroll ? "スクロール同期: ON (クリックでOFF)" : "スクロール同期: OFF (クリックでON)"}
-                    >
-                      ⇅ 同期
-                    </button>
-                  </div>
-                  <div className="format-bar">
-                    <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("bold"); }} title="太字 (Ctrl+B)"><b>B</b></button>
-                    <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("italic"); }} title="斜体 (Ctrl+I)"><i>I</i></button>
-                    <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("strike"); }} title="取り消し線"><s>S</s></button>
-                    <span className="format-separator" />
-                    <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("h1"); }} title="見出し1">H1</button>
-                    <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("h2"); }} title="見出し2">H2</button>
-                    <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("h3"); }} title="見出し3">H3</button>
-                    <span className="format-separator" />
-                    <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("ul"); }} title="箇条書きリスト">• リスト</button>
-                    <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("ol"); }} title="番号付きリスト">1. リスト</button>
-                    <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("quote"); }} title="引用">&gt; 引用</button>
-                    <span className="format-separator" />
-                    <button className="format-btn format-btn-mono" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("code"); }} title="コード">`code`</button>
-                    <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("link"); }} title="リンク">&#128279; リンク</button>
-                    <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("hr"); }} title="水平線">&#8212; 区切り</button>
-                    <span className="format-separator" />
-                    <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertToc(); }} title="目次を挿入">目次</button>
-                    <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleImportCsv(); }} title="CSVをインポートして追加">CSV</button>
-                  </div>
-                  {/* ===== AI ツールバー (常に全表示) ===== */}
-                  {(() => {
-                    const aiEnabled = !!aiSettings.apiKey;
-                    return (
-                      <div className={`ai-bar ${aiEnabled ? "ai-bar--on" : "ai-bar--off"}`}>
-                        {/* 状態チップ */}
-                        <span
-                          className="ai-bar__chip"
-                          title={aiEnabled
-                            ? `AI有効: ${aiSettings.provider} / ${aiSettings.model}`
-                            : "APIキーが未設定です。右の「⚙ 設定する」から設定してください"}
-                        >
-                          {aiEnabled ? "✦ AI" : "⚙ AI"}
-                        </span>
-                        <span className="ai-bar__sep" />
-                        {/* Feature 3: Mermaid テンプレート (APIキー不要) */}
-                        <button
-                          ref={templateBtnRef}
-                          className="ai-bar__btn"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (templatePos) {
-                              setTemplatePos(null);
-                            } else {
-                              const rect = templateBtnRef.current?.getBoundingClientRect();
-                              if (rect) setTemplatePos({ x: rect.left, y: rect.bottom + 2 });
-                            }
-                          }}
-                          title="Mermaid図テンプレートを挿入（APIキー不要）"
-                        >
-                          図テンプレ ▾
-                        </button>
-                        <span className="ai-bar__sep" />
-                        {/* Feature 2: AI テキスト変換 */}
-                        <button
-                          ref={aiTransformBtnRef}
-                          className={`ai-bar__btn${!aiEnabled ? " ai-bar__btn--inactive" : ""}${aiTransforming ? " ai-bar__btn--busy" : ""}`}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (!aiEnabled) {
-                              showToast("APIキーが設定されていません。設定を開きます");
-                              setShowSettings(true);
-                              return;
-                            }
-                            const textarea = editorRef.current;
-                            if (!textarea) return;
-                            if (textarea.selectionStart === textarea.selectionEnd) {
-                              showToast("テキストを選択してからクリックしてください");
-                              return;
-                            }
-                            savedSelectionRef.current = {
-                              start: textarea.selectionStart,
-                              end: textarea.selectionEnd,
-                            };
-                            if (aiTransformOpen) {
-                              setAiTransformOpen(false);
-                              setAiTransformPos(null);
-                            } else {
-                              const rect = aiTransformBtnRef.current?.getBoundingClientRect();
-                              if (rect) setAiTransformPos({ x: rect.left, y: rect.bottom + 2 });
-                              setAiTransformOpen(true);
-                            }
-                          }}
-                          title={aiEnabled ? "選択テキストをAIで変換（翻訳・要約・校正・箇条書き）" : "⚙ APIキー未設定 — クリックして設定を開く"}
-                          disabled={aiTransforming}
-                        >
-                          {aiTransforming ? "変換中..." : "AI変換"}
-                        </button>
-                        {/* Feature 1: AI Mermaid 生成 */}
-                        <button
-                          className={`ai-bar__btn${!aiEnabled ? " ai-bar__btn--inactive" : ""}`}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            if (!aiEnabled) {
-                              showToast("APIキーが設定されていません。設定を開きます");
-                              setShowSettings(true);
-                              return;
-                            }
-                            setAiGenerateError("");
-                            setShowAiGenerate(true);
-                          }}
-                          title={aiEnabled ? "AIでMermaid図をゼロから生成" : "⚙ APIキー未設定 — クリックして設定を開く"}
-                        >
-                          AI図生成
-                        </button>
-                        {/* API未設定時: 設定を促すリンク */}
-                        {!aiEnabled && (
-                          <button
-                            className="ai-bar__setup-hint"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              setShowSettings(true);
-                            }}
-                            title="設定画面を開いてAPIキーを入力してください"
-                          >
-                            ⚙ 設定する →
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })()}
-                  <textarea
-                    ref={editorRef}
-                    className="editor-textarea"
-                    value={content}
-                    onChange={(e) => handleContentChange(e.target.value)}
-                    placeholder="Markdownを入力するか、ファイルを開いてください..."
-                  />
+        <div
+          className="content-area"
+          style={{ display: "flex", flexDirection: "row" }}
+          ref={containerRef}
+        >
+          {editorVisible && (
+            <>
+              <div
+                className="editor-panel"
+                style={{ flex: `0 0 ${editorRatio}%` }}
+              >
+                <div className="editor-panel-header">
+                  <span>Markdown ソース</span>
+                  <button
+                    className={`sync-scroll-btn ${syncScroll ? "active" : ""}`}
+                    onClick={() => setSyncScroll((v) => !v)}
+                    title={syncScroll ? "スクロール同期: ON (クリックでOFF)" : "スクロール同期: OFF (クリックでON)"}
+                  >
+                    ⇅ 同期
+                  </button>
                 </div>
-                <div className="divider" onMouseDown={handleMouseDown} />
-              </>
-            )}
-            <MarkdownPreview
-              content={content}
-              previewRef={previewRef}
-              aiSettings={aiSettings}
-              onUpdateMermaidBlock={handleUpdateMermaidBlock}
-            />
-          </div>
-        ) : (
-          /* Table edit mode */
-          <TableEditor
-            tables={tables}
-            onUpdateCell={handleUpdateCell}
-            onAddRow={handleAddRow}
-            onDeleteRow={handleDeleteRow}
-            onAddColumn={handleAddColumn}
-            onDeleteColumn={handleDeleteColumn}
-            onExportCsv={handleExportCsv}
+                <div className="format-bar">
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("bold"); }} title="太字 (Ctrl+B)"><b>B</b></button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("italic"); }} title="斜体 (Ctrl+I)"><i>I</i></button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("strike"); }} title="取り消し線"><s>S</s></button>
+                  <span className="format-separator" />
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("h1"); }} title="見出し1">H1</button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("h2"); }} title="見出し2">H2</button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("h3"); }} title="見出し3">H3</button>
+                  <span className="format-separator" />
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("ul"); }} title="箇条書きリスト">• リスト</button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("ol"); }} title="番号付きリスト">1. リスト</button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("quote"); }} title="引用">&gt; 引用</button>
+                  <span className="format-separator" />
+                  <button className="format-btn format-btn-mono" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("code"); }} title="コード">`code`</button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("link"); }} title="リンク">&#128279; リンク</button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("hr"); }} title="水平線">&#8212; 区切り</button>
+                  <span className="format-separator" />
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertToc(); }} title="目次を挿入">目次</button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleImportCsv(); }} title="CSVをインポートして追加">CSV</button>
+                </div>
+                {/* ===== AI ツールバー (常に全表示) ===== */}
+                {(() => {
+                  const aiEnabled = !!aiSettings.apiKey;
+                  return (
+                    <div className={`ai-bar ${aiEnabled ? "ai-bar--on" : "ai-bar--off"}`}>
+                      {/* 状態チップ */}
+                      <span
+                        className="ai-bar__chip"
+                        title={aiEnabled
+                          ? `AI有効: ${aiSettings.provider} / ${aiSettings.model}`
+                          : "APIキーが未設定です。右の「⚙ 設定する」から設定してください"}
+                      >
+                        {aiEnabled ? "✦ AI" : "⚙ AI"}
+                      </span>
+                      <span className="ai-bar__sep" />
+                      {/* Feature 3: Mermaid テンプレート (APIキー不要) */}
+                      <button
+                        ref={templateBtnRef}
+                        className="ai-bar__btn"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (templatePos) {
+                            setTemplatePos(null);
+                          } else {
+                            const rect = templateBtnRef.current?.getBoundingClientRect();
+                            if (rect) setTemplatePos({ x: rect.left, y: rect.bottom + 2 });
+                          }
+                        }}
+                        title="Mermaid図テンプレートを挿入（APIキー不要）"
+                      >
+                        図テンプレ ▾
+                      </button>
+                      <span className="ai-bar__sep" />
+                      {/* Feature 2: AI テキスト変換 */}
+                      <button
+                        ref={aiTransformBtnRef}
+                        className={`ai-bar__btn${!aiEnabled ? " ai-bar__btn--inactive" : ""}${aiTransforming ? " ai-bar__btn--busy" : ""}`}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (!aiEnabled) {
+                            showToast("APIキーが設定されていません。設定を開きます");
+                            setShowSettings(true);
+                            return;
+                          }
+                          const textarea = editorRef.current;
+                          if (!textarea) return;
+                          if (textarea.selectionStart === textarea.selectionEnd) {
+                            showToast("テキストを選択してからクリックしてください");
+                            return;
+                          }
+                          savedSelectionRef.current = {
+                            start: textarea.selectionStart,
+                            end: textarea.selectionEnd,
+                          };
+                          if (aiTransformOpen) {
+                            setAiTransformOpen(false);
+                            setAiTransformPos(null);
+                          } else {
+                            const rect = aiTransformBtnRef.current?.getBoundingClientRect();
+                            if (rect) setAiTransformPos({ x: rect.left, y: rect.bottom + 2 });
+                            setAiTransformOpen(true);
+                          }
+                        }}
+                        title={aiEnabled ? "選択テキストをAIで変換（翻訳・要約・校正・箇条書き）" : "⚙ APIキー未設定 — クリックして設定を開く"}
+                        disabled={aiTransforming}
+                      >
+                        {aiTransforming ? "変換中..." : "AI変換"}
+                      </button>
+                      {/* Feature 1: AI Mermaid 生成 */}
+                      <button
+                        className={`ai-bar__btn${!aiEnabled ? " ai-bar__btn--inactive" : ""}`}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          if (!aiEnabled) {
+                            showToast("APIキーが設定されていません。設定を開きます");
+                            setShowSettings(true);
+                            return;
+                          }
+                          setAiGenerateError("");
+                          setShowAiGenerate(true);
+                        }}
+                        title={aiEnabled ? "AIでMermaid図をゼロから生成" : "⚙ APIキー未設定 — クリックして設定を開く"}
+                      >
+                        AI図生成
+                      </button>
+                      {/* API未設定時: 設定を促すリンク */}
+                      {!aiEnabled && (
+                        <button
+                          className="ai-bar__setup-hint"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            setShowSettings(true);
+                          }}
+                          title="設定画面を開いてAPIキーを入力してください"
+                        >
+                          ⚙ 設定する →
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()}
+                <textarea
+                  ref={editorRef}
+                  className="editor-textarea"
+                  value={content}
+                  onChange={(e) => handleContentChange(e.target.value)}
+                  placeholder="Markdownを入力するか、ファイルを開いてください..."
+                />
+              </div>
+              <div className="divider" onMouseDown={handleMouseDown} />
+            </>
+          )}
+          <MarkdownPreview
+            content={content}
+            previewRef={previewRef}
+            aiSettings={aiSettings}
+            onUpdateMermaidBlock={handleUpdateMermaidBlock}
+            onInlineEdit={handleInlineEdit}
           />
-        )}
+        </div>
       </div>
 
       <StatusBar

@@ -378,3 +378,22 @@
 .md-preview input[type="checkbox"] {
   margin-right: 0.5em;
 }
+
+/* ========== WYSIWYG Inline Editing ========== */
+[data-editable="true"] {
+  cursor: text;
+  border-radius: 3px;
+  outline: none;
+  transition: box-shadow 0.12s ease;
+}
+
+[data-editable="true"]:hover {
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+[data-editable="true"]:focus {
+  box-shadow: inset 0 0 0 2px var(--primary);
+  background-color: color-mix(in srgb, var(--primary) 4%, transparent);
+}
+
+/* テーブルセルの hover は控えめに（全体の [data-editable] スタイルが適用される） */

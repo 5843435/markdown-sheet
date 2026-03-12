@@ -7,7 +7,6 @@ interface Props {
   canUndo: boolean;
   canRedo: boolean;
   theme: "light" | "dark";
-  activeViewTab: "preview" | "table";
   editorVisible: boolean;
   recentFiles: RecentFile[];
   onOpenFolder: () => void;
@@ -32,7 +31,6 @@ const Toolbar: FC<Props> = ({
   canUndo,
   canRedo,
   theme,
-  activeViewTab,
   editorVisible,
   recentFiles,
   onOpenFolder,
@@ -137,34 +135,30 @@ const Toolbar: FC<Props> = ({
           &#128269; 検索
         </button>
 
-        {activeViewTab === "preview" && (
-          <>
-            <div className="toolbar-separator" />
+        <div className="toolbar-separator" />
 
-            {/* ===== 表示グループ ===== */}
-            <span className="toolbar-group-label">表示</span>
-            <button
-              onClick={onToggleEditor}
-              title={`エディタを${editorVisible ? "非表示" : "表示"} (Ctrl+\\)`}
-            >
-              {editorVisible ? "◀ エディタ" : "▶ エディタ"}
-            </button>
+        {/* ===== 表示グループ ===== */}
+        <span className="toolbar-group-label">表示</span>
+        <button
+          onClick={onToggleEditor}
+          title={`エディタを${editorVisible ? "非表示" : "表示"} (Ctrl+\\)`}
+        >
+          {editorVisible ? "◀ エディタ" : "▶ エディタ"}
+        </button>
 
-            <div className="toolbar-separator" />
+        <div className="toolbar-separator" />
 
-            {/* ===== 出力グループ ===== */}
-            <span className="toolbar-group-label">出力</span>
-            <button onClick={onCopyRichText} title="書式付きでコピー (PPT/Excel向け)">
-              書式コピー
-            </button>
-            <button onClick={onExportPdf} title="PDFとしてエクスポート">
-              PDF
-            </button>
-            <button onClick={onExportHtml} title="HTMLとしてエクスポート">
-              HTML
-            </button>
-          </>
-        )}
+        {/* ===== 出力グループ ===== */}
+        <span className="toolbar-group-label">出力</span>
+        <button onClick={onCopyRichText} title="書式付きでコピー (PPT/Excel向け)">
+          書式コピー
+        </button>
+        <button onClick={onExportPdf} title="PDFとしてエクスポート">
+          PDF
+        </button>
+        <button onClick={onExportHtml} title="HTMLとしてエクスポート">
+          HTML
+        </button>
       </div>
       <div className="toolbar-right">
         <button

@@ -1,4 +1,4 @@
-import { type FC, useEffect, useRef, useState } from "react";
+import { type FC, useCallback, useEffect, useRef, useState } from "react";
 import type { AiSettings } from "../types";
 import { callAI } from "../lib/callAI";
 import { marked } from "marked";
@@ -9,6 +9,25 @@ import katex from "katex";
 import "katex/dist/katex.min.css";
 import { makeHeadingId } from "../lib/headingId";
 import { preprocessMath } from "../lib/mathPreprocess";
+import {
+  computeSourceMappings,
+  computeListItemMappings,
+  computeTableMappings,
+  countFrontMatterLines,
+  type SourceMapping,
+  type ListItemMapping,
+  type TableMapping,
+} from "../lib/sourceMapping";
+import { reconstructBlock } from "../lib/htmlToMarkdown";
+import { parseMarkdown, serializeTable } from "../lib/markdownParser";
+import {
+  addRowToTable,
+  deleteRowFromTable,
+  addColumnToTable,
+  deleteColumnFromTable,
+  tableToCsv,
+} from "../lib/tableOperations";
+import TableContextMenu from "./TableContextMenu";
 import "./MarkdownPreview.css";
 
 // mermaid 初期化
@@ -20,6 +39,17 @@ mermaid.initialize({
 });
 
 let mermaidCounter = 0;
+
+// ソースマッピング用モジュールスコープ変数（mermaidCounter と同パターン）
+let currentHeadingMappings: SourceMapping[] = [];
+let currentParagraphMappings: SourceMapping[] = [];
+let currentListItemMappings: ListItemMapping[] = [];
+let currentTableMappings: TableMapping[] = [];
+let headingIdx = 0;
+let paragraphIdx = 0;
+let listItemIdx = 0;
+let tableIdx = 0;
+let fmLineCount = 0; // frontmatter の行数オフセット
 
 // marked 設定
 marked.use({
@@ -60,7 +90,57 @@ marked.use({
     },
     heading({ text, depth }: { text: string; depth: number }) {
       const id = makeHeadingId(text);
-      return `<h${depth} id="${id}">${text}</h${depth}>`;
+      const m = currentHeadingMappings[headingIdx++];
+      const attrs = m
+        ? ` data-source-start="${fmLineCount + m.startLine}" data-source-end="${fmLineCount + m.endLine}" data-editable="true"`
+        : "";
+      return `<h${depth} id="${id}"${attrs}>${text}</h${depth}>`;
+    },
+    paragraph({ text }: { text: string }) {
+      // math-block のみのパラグラフは編集不可
+      const m = currentParagraphMappings[paragraphIdx++];
+      if (/^<div class="math-block"/.test(text)) {
+        return `<p>${text}</p>`;
+      }
+      const attrs = m
+        ? ` data-source-start="${fmLineCount + m.startLine}" data-source-end="${fmLineCount + m.endLine}" data-editable="true"`
+        : "";
+      return `<p${attrs}>${text}</p>`;
+    },
+    listitem({ text, task, checked }: { text: string; task: boolean; checked?: boolean }) {
+      const m = currentListItemMappings[listItemIdx++];
+      const attrs = m
+        ? ` data-source-start="${fmLineCount + m.startLine}" data-source-end="${fmLineCount + m.endLine}" data-editable="true"`
+        : "";
+      const checkbox = task
+        ? `<input type="checkbox"${checked ? " checked" : ""} disabled> `
+        : "";
+      return `<li${attrs}>${checkbox}${text}</li>\n`;
+    },
+    table(token: { header: Array<{ text: string; align: string | null }>; rows: Array<Array<{ text: string; align: string | null }>> }) {
+      const m = currentTableMappings[tableIdx];
+      const ti = tableIdx++;
+      const tAttrs = m
+        ? ` data-source-start="${fmLineCount + m.startLine}" data-source-end="${fmLineCount + m.endLine}" data-table-index="${ti}"`
+        : "";
+      let html = `<table${tAttrs}><thead><tr>`;
+      for (let ci = 0; ci < token.header.length; ci++) {
+        const cell = token.header[ci];
+        const align = cell.align ? ` style="text-align:${cell.align}"` : "";
+        html += `<th data-table-index="${ti}" data-cell-row="-1" data-cell-col="${ci}" data-editable="true"${align}>${marked.parseInline(cell.text)}</th>`;
+      }
+      html += "</tr></thead><tbody>";
+      for (let ri = 0; ri < token.rows.length; ri++) {
+        html += "<tr>";
+        for (let ci = 0; ci < token.rows[ri].length; ci++) {
+          const cell = token.rows[ri][ci];
+          const align = cell.align ? ` style="text-align:${cell.align}"` : "";
+          html += `<td data-table-index="${ti}" data-cell-row="${ri}" data-cell-col="${ci}" data-editable="true"${align}>${marked.parseInline(cell.text)}</td>`;
+        }
+        html += "</tr>";
+      }
+      html += "</tbody></table>";
+      return html;
     },
   },
 });
@@ -134,6 +214,7 @@ interface Props {
   previewRef?: React.RefObject<HTMLDivElement | null>;
   aiSettings?: AiSettings;
   onUpdateMermaidBlock?: (blockIndex: number, newSource: string) => void;
+  onInlineEdit?: (startLine: number, endLine: number, newMarkdown: string) => void;
 }
 
 const MarkdownPreview: FC<Props> = ({
@@ -141,6 +222,7 @@ const MarkdownPreview: FC<Props> = ({
   previewRef: externalRef,
   aiSettings,
   onUpdateMermaidBlock,
+  onInlineEdit,
 }) => {
   const [html, setHtml] = useState("");
   const [frontMatter, setFrontMatter] = useState<Record<string, string> | null>(null);
@@ -150,7 +232,22 @@ const MarkdownPreview: FC<Props> = ({
   const aiSettingsRef = useRef(aiSettings);
   aiSettingsRef.current = aiSettings;
   const onUpdateMermaidBlockRef = useRef(onUpdateMermaidBlock);
+  const onInlineEditRef = useRef(onInlineEdit);
+  onInlineEditRef.current = onInlineEdit;
+
+  // インライン編集用 refs
+  const editingElementRef = useRef<HTMLElement | null>(null);
+  const editingOriginalHtmlRef = useRef("");
+  const isInlineEditingRef = useRef(false);
+  const contentRef = useRef(content);
+  contentRef.current = content;
   onUpdateMermaidBlockRef.current = onUpdateMermaidBlock;
+
+  // テーブル右クリックメニュー state
+  const [tableCtxMenu, setTableCtxMenu] = useState<{
+    visible: boolean; x: number; y: number;
+    tableIndex: number; row: number; col: number;
+  }>({ visible: false, x: 0, y: 0, tableIndex: -1, row: 0, col: 0 });
 
   // dangerouslySetInnerHTML の代わりに手動で innerHTML を管理する ref。
   // React 19 StrictMode は true unmount/remount を行うため、
@@ -180,11 +277,24 @@ const MarkdownPreview: FC<Props> = ({
       setFrontMatter(meta);
       const preprocessed = preprocessMath(body);
       const normalized = normalizeTableLines(preprocessed);
+
+      // ソースマッピングを計算（前処理前の body に対して lexer を実行）
+      const allMappings = computeSourceMappings(body);
+      currentHeadingMappings = allMappings.filter((m) => m.type === "heading");
+      currentParagraphMappings = allMappings.filter((m) => m.type === "paragraph");
+      currentListItemMappings = computeListItemMappings(body);
+      currentTableMappings = computeTableMappings(body);
+      fmLineCount = countFrontMatterLines(content);
+
       // カウンターをリセットしてから marked を呼ぶ。
       // こうすることで同じ content なら毎回同じ HTML 文字列が生成され、
       // React StrictMode の 2 重発火時に setHtml が同一値なら再レンダーが
       // スキップされる（Object.is で同じ文字列 → bail out）。
       mermaidCounter = 0;
+      headingIdx = 0;
+      paragraphIdx = 0;
+      listItemIdx = 0;
+      tableIdx = 0;
       const result = marked(normalized) as string;
       setHtml(result);
     } catch (error) {
@@ -196,9 +306,15 @@ const MarkdownPreview: FC<Props> = ({
   // HTML 書き込み → Mermaid/KaTeX レンダリングを単一 effect で実行。
   // innerHTML 設定と placeholder 探索の間に別 effect が挟まる問題を防ぐ。
   useEffect(() => {
-    // 1) innerHTML を設定
+    // 1) innerHTML を設定（インライン編集中はスキップして編集状態を保持）
     const div = mdContentRef.current;
-    if (div) div.innerHTML = html;
+    if (div && !isInlineEditingRef.current) {
+      div.innerHTML = html;
+      // 全 [data-editable] 要素を常時 contentEditable にして WYSIWYG 感を出す
+      div.querySelectorAll<HTMLElement>("[data-editable='true']").forEach((el) => {
+        el.contentEditable = "true";
+      });
+    }
 
     // 2) Mermaid / KaTeX をレンダリング
     const container = ref.current;
@@ -443,6 +559,213 @@ const MarkdownPreview: FC<Props> = ({
     };
   }, [html, ref]);
 
+  // --- インライン編集 ---
+  const cancelInlineEdit = useCallback(() => {
+    const element = editingElementRef.current;
+    if (!element) return;
+    element.innerHTML = editingOriginalHtmlRef.current;
+    editingElementRef.current = null;
+    isInlineEditingRef.current = false;
+  }, []);
+
+  const commitInlineEdit = useCallback(
+    (element: HTMLElement) => {
+      // --- テーブルセルの場合 ---
+      const tiAttr = element.getAttribute("data-table-index");
+      if (tiAttr !== null) {
+        const ti = parseInt(tiAttr);
+        const row = parseInt(element.getAttribute("data-cell-row") || "0");
+        const col = parseInt(element.getAttribute("data-cell-col") || "0");
+
+        editingElementRef.current = null;
+        isInlineEditingRef.current = false;
+
+        const doc = parseMarkdown(contentRef.current);
+        const table = doc.tables[ti];
+        if (!table) return;
+
+        const newValue = (element.textContent || "").trim();
+        const oldValue = row === -1 ? (table.headers[col] ?? "") : (table.rows[row]?.[col] ?? "");
+        if (newValue === oldValue) return;
+
+        if (row === -1) {
+          table.headers[col] = newValue;
+        } else {
+          table.rows[row][col] = newValue;
+        }
+
+        const serialized = serializeTable(table).replace(/\n$/, "");
+        onInlineEditRef.current?.(table.start_line, table.end_line, serialized);
+        return;
+      }
+
+      // --- 見出し・段落・リストの場合 ---
+      const startLine = parseInt(element.getAttribute("data-source-start") || "-1");
+      const endLine = parseInt(element.getAttribute("data-source-end") || "-1");
+      if (startLine < 0 || endLine < 0) {
+        editingElementRef.current = null;
+        isInlineEditingRef.current = false;
+        return;
+      }
+
+      const lines = contentRef.current.split("\n");
+      const originalLines = lines.slice(startLine, endLine + 1);
+      const newMarkdown = reconstructBlock(element.tagName, element.innerHTML, originalLines);
+
+      if (newMarkdown === originalLines.join("\n")) {
+        editingElementRef.current = null;
+        isInlineEditingRef.current = false;
+        return;
+      }
+
+      editingElementRef.current = null;
+      isInlineEditingRef.current = false;
+
+      onInlineEditRef.current?.(startLine, endLine, newMarkdown);
+    },
+    [cancelInlineEdit]
+  );
+
+  // テーブル右クリック操作
+  const handleTableOperation = useCallback((
+    operation: (table: import("../types").MarkdownTable) => import("../types").MarkdownTable
+  ) => {
+    const { tableIndex } = tableCtxMenu;
+    setTableCtxMenu((m) => ({ ...m, visible: false }));
+
+    const doc = parseMarkdown(contentRef.current);
+    const table = doc.tables[tableIndex];
+    if (!table) return;
+
+    const startLine = table.start_line;
+    const endLine = table.end_line;
+    const modified = operation(table);
+    const serialized = serializeTable(modified).replace(/\n$/, "");
+    onInlineEditRef.current?.(startLine, endLine, serialized);
+  }, [tableCtxMenu]);
+
+  const handleTableCsvExport = useCallback(async () => {
+    const { tableIndex } = tableCtxMenu;
+    setTableCtxMenu((m) => ({ ...m, visible: false }));
+
+    const doc = parseMarkdown(contentRef.current);
+    const table = doc.tables[tableIndex];
+    if (!table) return;
+
+    try {
+      const { save } = await import("@tauri-apps/plugin-dialog");
+      const { writeTextFile } = await import("@tauri-apps/plugin-fs");
+      const path = await save({
+        filters: [{ name: "CSV", extensions: ["csv"] }],
+        defaultPath: `${table.heading || "table"}.csv`,
+      });
+      if (path) await writeTextFile(path, tableToCsv(table));
+    } catch (err) {
+      console.error("CSV export error:", err);
+    }
+  }, [tableCtxMenu]);
+
+  // WYSIWYG: focusin/focusout/keydown/dblclick(テーブル)/contextmenu イベントリスナー
+  useEffect(() => {
+    const container = mdContentRef.current;
+    if (!container) return;
+
+    // --- 見出し・段落・リスト: focusin で編集開始（常時 contentEditable なのでクリックだけでカーソルが立つ） ---
+    const handleFocusIn = (e: FocusEvent) => {
+      const target = (e.target as HTMLElement).closest<HTMLElement>(
+        "[data-editable='true']"
+      );
+      if (!target) return;
+      // 既に同じ要素をトラッキング中ならスキップ
+      if (editingElementRef.current === target) return;
+      // 別の要素に移動 → 前の要素をコミット
+      if (editingElementRef.current) {
+        commitInlineEdit(editingElementRef.current);
+      }
+      editingElementRef.current = target;
+      editingOriginalHtmlRef.current = target.innerHTML;
+      isInlineEditingRef.current = true;
+    };
+
+    const handleFocusOut = (e: FocusEvent) => {
+      const element = editingElementRef.current;
+      if (!element) return;
+      // フォーカス先が同じ要素内 or 別の editable 要素なら focusIn 側で処理
+      const related = e.relatedTarget as HTMLElement | null;
+      if (element.contains(related)) return;
+      if (related?.closest?.("[data-editable='true']")) return;
+      commitInlineEdit(element);
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const element = editingElementRef.current;
+      if (!element) return;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        cancelInlineEdit();
+        element.blur();
+      }
+      // 見出しは Enter で確定
+      if (e.key === "Enter" && /^H[1-6]$/.test(element.tagName)) {
+        e.preventDefault();
+        commitInlineEdit(element);
+        element.blur();
+      }
+      // テーブルセルで Tab → 次/前のセルに移動
+      if (e.key === "Tab" && element.hasAttribute("data-table-index")) {
+        e.preventDefault();
+        commitInlineEdit(element);
+        const ti = parseInt(element.getAttribute("data-table-index") || "-1");
+        const row = parseInt(element.getAttribute("data-cell-row") || "0");
+        const col = parseInt(element.getAttribute("data-cell-col") || "0");
+        const doc = parseMarkdown(contentRef.current);
+        const t = doc.tables[ti];
+        if (!t) return;
+        const maxCol = t.headers.length - 1;
+        const maxRow = t.rows.length - 1;
+        let nextRow = row, nextCol = col;
+        if (e.shiftKey) {
+          if (col > 0) nextCol = col - 1;
+          else if (row > -1) { nextRow = row === 0 ? -1 : row - 1; nextCol = maxCol; }
+        } else {
+          if (col < maxCol) nextCol = col + 1;
+          else if (row < maxRow) { nextRow = row === -1 ? 0 : row + 1; nextCol = 0; }
+        }
+        setTimeout(() => {
+          const next = mdContentRef.current?.querySelector<HTMLElement>(
+            `[data-table-index="${ti}"][data-cell-row="${nextRow}"][data-cell-col="${nextCol}"]`
+          );
+          next?.focus();
+        }, 50);
+      }
+    };
+
+    // --- テーブルセル: 右クリックメニュー ---
+    const handleContextMenu = (e: MouseEvent) => {
+      const cellTarget = (e.target as HTMLElement).closest<HTMLElement>(
+        "td[data-table-index], th[data-table-index]"
+      );
+      if (!cellTarget) return;
+      e.preventDefault();
+      const ti = parseInt(cellTarget.getAttribute("data-table-index") || "-1");
+      const row = parseInt(cellTarget.getAttribute("data-cell-row") || "0");
+      const col = parseInt(cellTarget.getAttribute("data-cell-col") || "0");
+      setTableCtxMenu({ visible: true, x: e.clientX, y: e.clientY, tableIndex: ti, row, col });
+    };
+
+    container.addEventListener("focusin", handleFocusIn);
+    container.addEventListener("focusout", handleFocusOut);
+    container.addEventListener("keydown", handleKeyDown);
+    container.addEventListener("contextmenu", handleContextMenu);
+
+    return () => {
+      container.removeEventListener("focusin", handleFocusIn);
+      container.removeEventListener("focusout", handleFocusOut);
+      container.removeEventListener("keydown", handleKeyDown);
+      container.removeEventListener("contextmenu", handleContextMenu);
+    };
+  }, [commitInlineEdit, cancelInlineEdit]);
+
   const previewStyle = {
     fontFamily: FONT_MAP[previewFont] || FONT_MAP.system,
     fontSize: `${previewSize}px`,
@@ -512,6 +835,19 @@ const MarkdownPreview: FC<Props> = ({
             innerHTML は dangerouslySetInnerHTML を使わず useEffect で手動管理する。 */}
         <div key="md-content" ref={mdContentRef} />
       </div>
+
+      {/* テーブル右クリックメニュー */}
+      <TableContextMenu
+        menu={tableCtxMenu}
+        onClose={() => setTableCtxMenu((m) => ({ ...m, visible: false }))}
+        onAddRowAbove={() => handleTableOperation((t) => addRowToTable(t, tableCtxMenu.row === -1 ? 0 : tableCtxMenu.row, "above"))}
+        onAddRowBelow={() => handleTableOperation((t) => addRowToTable(t, tableCtxMenu.row === -1 ? 0 : tableCtxMenu.row, "below"))}
+        onDeleteRow={() => handleTableOperation((t) => deleteRowFromTable(t, tableCtxMenu.row))}
+        onAddColumnLeft={() => handleTableOperation((t) => addColumnToTable(t, tableCtxMenu.col, "left"))}
+        onAddColumnRight={() => handleTableOperation((t) => addColumnToTable(t, tableCtxMenu.col, "right"))}
+        onDeleteColumn={() => handleTableOperation((t) => deleteColumnFromTable(t, tableCtxMenu.col))}
+        onExportCsv={handleTableCsvExport}
+      />
     </div>
   );
 };
