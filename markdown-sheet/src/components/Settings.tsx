@@ -5,7 +5,7 @@ import "./Settings.css";
 const PROVIDERS: {
   id: string;
   label: string;
-  format: "openai" | "anthropic";
+  format: "openai" | "anthropic" | "azure";
   baseUrl: string;
   model: string;
 }[] = [
@@ -14,6 +14,7 @@ const PROVIDERS: {
   { id: "grok",      label: "Grok / xAI (無料枠あり)",   format: "openai",    baseUrl: "https://api.x.ai/v1",                                      model: "grok-2-latest"            },
   { id: "gemini",    label: "Gemini / Google (無料枠あり)", format: "openai", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/", model: "gemini-2.0-flash"         },
   { id: "openai",    label: "OpenAI (ChatGPT)",           format: "openai",    baseUrl: "https://api.openai.com/v1",                                model: "gpt-4o"                   },
+  { id: "azure",     label: "Azure OpenAI",               format: "azure",     baseUrl: "https://{resource}.openai.azure.com/openai/deployments/{deployment}", model: "gpt-5.1" },
   { id: "anthropic", label: "Claude / Anthropic",         format: "anthropic", baseUrl: "https://api.anthropic.com/v1",                             model: "claude-haiku-4-5-20251001"},
   { id: "custom",    label: "カスタム (さくらのAI など)", format: "openai",    baseUrl: "",                                                         model: ""                         },
 ];
@@ -63,6 +64,25 @@ const Settings: FC<Props> = ({ settings, onSave, onClose }) => {
             model: local.model,
             max_tokens: 5,
             messages: [{ role: "user", content: "hi" }],
+          }),
+        });
+        if (resp.ok) {
+          setTestMsg({ text: "接続成功！", ok: true });
+        } else {
+          const err = await resp.json().catch(() => ({}));
+          setTestMsg({ text: `エラー: ${err?.error?.message || resp.statusText}`, ok: false });
+        }
+      } else if (local.apiFormat === "azure") {
+        const url = local.baseUrl.replace(/\/$/, "") + "/chat/completions?api-version=2024-12-01-preview";
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "api-key": local.apiKey,
+          },
+          body: JSON.stringify({
+            messages: [{ role: "user", content: "hi" }],
+            max_completion_tokens: 5,
           }),
         });
         if (resp.ok) {
@@ -128,7 +148,7 @@ const Settings: FC<Props> = ({ settings, onSave, onClose }) => {
           </select>
 
           <div className="settings-format-badge">
-            形式: <strong>{local.apiFormat === "anthropic" ? "Anthropic Messages API" : "OpenAI 互換"}</strong>
+            形式: <strong>{local.apiFormat === "anthropic" ? "Anthropic Messages API" : local.apiFormat === "azure" ? "Azure OpenAI" : "OpenAI 互換"}</strong>
           </div>
 
           {/* API キー */}
@@ -138,7 +158,7 @@ const Settings: FC<Props> = ({ settings, onSave, onClose }) => {
             className="settings-input"
             value={local.apiKey}
             onChange={(e) => { setLocal((s) => ({ ...s, apiKey: e.target.value })); setTestMsg(null); }}
-            placeholder={local.apiFormat === "anthropic" ? "sk-ant-..." : "sk-..."}
+            placeholder={local.apiFormat === "anthropic" ? "sk-ant-..." : local.apiFormat === "azure" ? "Azure API キー" : "sk-..."}
             spellCheck={false}
           />
 

@@ -1519,6 +1519,7 @@ function App() {
           )}
           <MarkdownPreview
             content={content}
+            filePath={activeFile}
             previewRef={previewRef}
             aiSettings={aiSettings}
             onUpdateMermaidBlock={handleUpdateMermaidBlock}

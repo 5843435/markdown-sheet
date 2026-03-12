@@ -28,6 +28,22 @@ export async function callAI(
         messages: [{ role: "user", content: userContent }],
       }),
     });
+  } else if (apiFormat === "azure") {
+    const url = baseUrl.replace(/\/$/, "") + "/chat/completions?api-version=2024-12-01-preview";
+    resp = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": apiKey,
+      },
+      body: JSON.stringify({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent },
+        ],
+        max_completion_tokens: 2000,
+      }),
+    });
   } else {
     const url = baseUrl.replace(/\/$/, "") + "/chat/completions";
     resp = await fetch(url, {

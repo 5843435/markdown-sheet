@@ -2,6 +2,7 @@ import { type FC, useCallback, useEffect, useRef, useState } from "react";
 import type { AiSettings } from "../types";
 import { callAI } from "../lib/callAI";
 import { marked } from "marked";
+import { readFile } from "@tauri-apps/plugin-fs";
 import hljs from "highlight.js";
 import "highlight.js/styles/atom-one-dark.css";
 import mermaid from "mermaid";
@@ -218,6 +219,7 @@ const FONT_MAP: Record<string, string> = {
 
 interface Props {
   content: string;
+  filePath?: string | null;
   previewRef?: React.RefObject<HTMLDivElement | null>;
   aiSettings?: AiSettings;
   onUpdateMermaidBlock?: (blockIndex: number, newSource: string) => void;
@@ -226,6 +228,7 @@ interface Props {
 
 const MarkdownPreview: FC<Props> = ({
   content,
+  filePath,
   previewRef: externalRef,
   aiSettings,
   onUpdateMermaidBlock,
@@ -310,9 +313,16 @@ const MarkdownPreview: FC<Props> = ({
     }
   }, [content]);
 
+  // 相対画像パスをローカルファイルから blob URL に変換するための管理用 ref
+  const blobUrlsRef = useRef<string[]>([]);
+
   // HTML 書き込み → Mermaid/KaTeX レンダリングを単一 effect で実行。
   // innerHTML 設定と placeholder 探索の間に別 effect が挟まる問題を防ぐ。
   useEffect(() => {
+    // 前回の blob URL を解放
+    for (const url of blobUrlsRef.current) URL.revokeObjectURL(url);
+    blobUrlsRef.current = [];
+
     // 1) innerHTML を設定（インライン編集中はスキップして編集状態を保持）
     const div = mdContentRef.current;
     if (div && !isInlineEditingRef.current) {
@@ -321,6 +331,49 @@ const MarkdownPreview: FC<Props> = ({
       div.querySelectorAll<HTMLElement>("[data-editable='true']").forEach((el) => {
         el.contentEditable = "true";
       });
+    }
+
+    // 1.5) 相対画像パスをローカルファイルから blob URL に変換
+    if (div && filePath) {
+      const dir = filePath.replace(/[\\/][^\\/]+$/, "");
+      const imgs = Array.from(div.querySelectorAll<HTMLImageElement>("img"));
+      const blobUrls = blobUrlsRef.current;
+
+      (async () => {
+        for (const img of imgs) {
+          const src = img.getAttribute("src");
+          if (!src) continue;
+          if (/^(https?:|data:|blob:)/i.test(src)) continue;
+
+          // 相対パスを絶対パスに解決
+          const combined = dir.replace(/\\/g, "/") + "/" + src;
+          const parts = combined.split("/");
+          const resolved: string[] = [];
+          for (const p of parts) {
+            if (p === "..") resolved.pop();
+            else if (p !== ".") resolved.push(p);
+          }
+          const absolutePath = resolved.join("/");
+
+          try {
+            const data = await readFile(absolutePath);
+            const ext = src.split(".").pop()?.toLowerCase() ?? "";
+            const mime =
+              ext === "svg" ? "image/svg+xml" :
+              ext === "png" ? "image/png" :
+              ext === "gif" ? "image/gif" :
+              ext === "webp" ? "image/webp" :
+              ext === "bmp" ? "image/bmp" :
+              "image/jpeg";
+            const blob = new Blob([data], { type: mime });
+            const url = URL.createObjectURL(blob);
+            blobUrls.push(url);
+            img.src = url;
+          } catch {
+            // ファイルが見つからない場合はスキップ
+          }
+        }
+      })();
     }
 
     // 2) Mermaid / KaTeX をレンダリング
@@ -564,7 +617,7 @@ const MarkdownPreview: FC<Props> = ({
       cancelled = true;
       clearTimeout(timerId);
     };
-  }, [html, ref]);
+  }, [html, filePath, ref]);
 
   // --- インライン編集 ---
   const cancelInlineEdit = useCallback(() => {
