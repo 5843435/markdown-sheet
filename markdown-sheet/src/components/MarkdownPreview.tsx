@@ -112,8 +112,9 @@ marked.use({
         : "";
       return `<p${attrs}>${text}</p>`;
     },
-    listitem(this: { parser: { parseInline(tokens: unknown[]): string } }, token: { text: string; tokens: unknown[]; task: boolean; checked?: boolean }) {
-      const text = this.parser.parseInline(token.tokens);
+    listitem(this: { parser: { parse(tokens: unknown[], loose?: boolean): string } }, token: { text: string; tokens: unknown[]; task: boolean; checked?: boolean; loose: boolean }) {
+      // listitem はネストリスト・paragraph 等のブロック要素を含みうるため常に parse() を使う
+      const text = this.parser.parse(token.tokens, !!token.loose);
       const m = currentListItemMappings[listItemIdx++];
       const attrs = m
         ? ` data-source-start="${fmLineCount + m.startLine}" data-source-end="${fmLineCount + m.endLine}" data-editable="true"`
