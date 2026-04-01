@@ -42,6 +42,18 @@
   border-bottom-color: var(--primary);
 }
 
+.left-panel-close {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.left-panel-close:hover {
+  color: var(--text);
+  background: var(--bg-surface);
+}
+
 /* ========== File Tree ========== */
 .file-tree {
   flex: 1;

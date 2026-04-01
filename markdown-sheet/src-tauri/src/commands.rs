@@ -74,6 +74,15 @@ pub fn read_markdown_file(file_path: String) -> Result<ParsedDocument, String> {
     Ok(parse_markdown(&content))
 }
 
+/// 起動時のコマンドライン引数からファイルパスを取得する
+#[tauri::command]
+pub fn get_initial_file() -> Option<String> {
+    std::env::args().nth(1).filter(|a| {
+        let lower = a.to_lowercase();
+        lower.ends_with(".md") || lower.ends_with(".markdown")
+    })
+}
+
 /// テーブルを更新して Markdown ファイルに書き戻す Tauri コマンド
 #[tauri::command]
 pub fn save_markdown_file(

@@ -1,7 +1,7 @@
 pub mod commands;
 pub mod markdown_parser;
 
-use commands::{get_file_tree, read_markdown_file, save_markdown_file};
+use commands::{get_file_tree, get_initial_file, read_markdown_file, save_markdown_file};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -10,6 +10,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .invoke_handler(tauri::generate_handler![
             get_file_tree,
+            get_initial_file,
             read_markdown_file,
             save_markdown_file,
         ])

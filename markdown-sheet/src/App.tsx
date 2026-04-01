@@ -270,6 +270,7 @@ function App() {
   const [dirty, setDirty] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [editorVisible, setEditorVisible] = useState(true);
+  const [leftPanelVisible, setLeftPanelVisible] = useState(true);
   const [leftPanel, setLeftPanel] = useState<"folder" | "outline">("folder");
 
   // --- Auto-save ---
@@ -431,8 +432,6 @@ function App() {
   const closeTab = useCallback(
     (tabId: string) => {
       const currentTabs = tabsRef.current;
-      if (currentTabs.length <= 1) return; // 最後のタブは閉じない
-
       const isActive = tabId === activeTabIdRef.current;
 
       // 閉じる前に現タブの状態を保存（他タブのデータが最新になるよう）
@@ -442,9 +441,14 @@ function App() {
 
       // saveCurrentToTab が setTabs を呼ぶため、最新の tabs を再取得
       const latestTabs = tabsRef.current;
-      const remaining = latestTabs.filter((t) => t.id !== tabId);
+      let remaining = latestTabs.filter((t) => t.id !== tabId);
 
-      if (isActive && remaining.length > 0) {
+      // 最後のタブを閉じる場合は新しい空タブに入れ替え
+      if (remaining.length === 0) {
+        remaining = [makeInitialTab()];
+      }
+
+      if (isActive) {
         const idx = latestTabs.findIndex((t) => t.id === tabId);
         const newActive = remaining[Math.min(idx, remaining.length - 1)];
         setContent(newActive.content);
@@ -697,9 +701,12 @@ function App() {
     const el = previewRef.current;
     if (!el) return;
     try {
-      const fileName = activeFile
-        ? activeFile.split(/[\\/]/).pop()?.replace(/\.md$/i, "") || "document"
-        : "document";
+      const baseName = activeFile
+        ? activeFile.split(/[\\/]/).pop()?.replace(/\.md$/i, "") || ""
+        : "";
+      const now = new Date();
+      const ts = now.getFullYear().toString() + String(now.getMonth() + 1).padStart(2, "0") + String(now.getDate()).padStart(2, "0") + String(now.getHours()).padStart(2, "0") + String(now.getMinutes()).padStart(2, "0");
+      const fileName = baseName || ts;
 
       // Tauri の save ダイアログでファイルパスを取得
       const savePath = await save({
@@ -749,9 +756,11 @@ function App() {
       const clone = el.cloneNode(true) as HTMLElement;
       clone.querySelectorAll(".mermaid-actions, .mermaid-ai-panel").forEach((n) => n.remove());
       const htmlContent = clone.innerHTML;
+      const nowH = new Date();
+      const tsH = nowH.getFullYear().toString() + String(nowH.getMonth() + 1).padStart(2, "0") + String(nowH.getDate()).padStart(2, "0") + String(nowH.getHours()).padStart(2, "0") + String(nowH.getMinutes()).padStart(2, "0");
       const title = activeFile
-        ? activeFile.split(/[\\/]/).pop() || "document"
-        : "document";
+        ? activeFile.split(/[\\/]/).pop() || tsH
+        : tsH;
       const safeTitle = title.replace(/[&<>"]/g, (c) =>
         ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] ?? c)
       );
@@ -1111,6 +1120,102 @@ function App() {
     }
   }, []);
 
+  // --- Paste image from clipboard ---
+  const handlePasteImage = useCallback(
+    async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      const items = e.clipboardData?.items;
+      if (!items) {
+        console.warn("[paste] no clipboardData.items");
+        return;
+      }
+
+      // クリップボードに画像があるか確認
+      let imageItem: DataTransferItem | null = null;
+      for (const item of Array.from(items)) {
+        console.debug("[paste] item:", item.kind, item.type);
+        if (item.kind === "file" && item.type.startsWith("image/")) {
+          imageItem = item;
+          break;
+        }
+      }
+      if (!imageItem) {
+        console.debug("[paste] no image found, passing to default handler");
+        return; // テキストペーストは通常処理に任せる
+      }
+
+      e.preventDefault();
+
+      const blob = imageItem.getAsFile();
+      if (!blob) {
+        console.warn("[paste] getAsFile() returned null");
+        return;
+      }
+      console.debug("[paste] image blob:", blob.type, blob.size, "bytes");
+
+      try {
+        const { mkdir, exists } = await import("@tauri-apps/plugin-fs");
+
+        // タイムスタンプベースのファイル名
+        const now = new Date();
+        const ts = now.getFullYear().toString() +
+          String(now.getMonth() + 1).padStart(2, "0") +
+          String(now.getDate()).padStart(2, "0") +
+          String(now.getHours()).padStart(2, "0") +
+          String(now.getMinutes()).padStart(2, "0") +
+          String(now.getSeconds()).padStart(2, "0");
+        const ext = blob.type === "image/jpeg" ? "jpg" : blob.type === "image/gif" ? "gif" : "png";
+        const fileName = `${ts}.${ext}`;
+
+        let imgDir: string;
+        let insertText: string;
+
+        if (activeFile) {
+          // ファイル保存済み → 相対パス (images/xxx.png)
+          const dir = activeFile.replace(/[\\/][^\\/]+$/, "");
+          imgDir = `${dir}/images`;
+          insertText = `![](images/${fileName})`;
+        } else {
+          // 無題ファイル → tempフォルダに保存、絶対パスで挿入
+          const { tempDir } = await import("@tauri-apps/api/path");
+          const tmp = await tempDir();
+          imgDir = `${tmp}markdown-studio-images`;
+          insertText = `![](${imgDir.replace(/\\/g, "/")}/${fileName})`;
+        }
+
+        if (!(await exists(imgDir))) {
+          await mkdir(imgDir, { recursive: true });
+        }
+
+        const filePath = `${imgDir}/${fileName}`;
+
+        // 画像を保存
+        const arrayBuffer = await blob.arrayBuffer();
+        await writeFile(filePath, new Uint8Array(arrayBuffer));
+
+        // エディタにマークダウン画像構文を挿入
+        const textarea = editorRef.current;
+        if (!textarea) return;
+        const pos = textarea.selectionStart;
+        const newContent =
+          contentRef.current.substring(0, pos) +
+          insertText +
+          contentRef.current.substring(pos);
+        handleContentChange(newContent);
+
+        // カーソルを挿入テキストの後ろに移動
+        requestAnimationFrame(() => {
+          textarea.selectionStart = textarea.selectionEnd = pos + insertText.length;
+        });
+
+        showToast(`画像を保存しました: images/${fileName}`);
+      } catch (error) {
+        console.error("Image paste error:", error);
+        showToast("画像の貼り付けに失敗しました", true);
+      }
+    },
+    [activeFile, handleContentChange]
+  );
+
   // --- Copy rich text ---
   const handleCopyRichText = useCallback(async () => {
     const el = previewRef.current;
@@ -1147,6 +1252,18 @@ function App() {
   loadFileRef.current = loadFile;
   const handleContentChangeRef = useRef(handleContentChange);
   handleContentChangeRef.current = handleContentChange;
+
+  // 起動時にコマンドライン引数で渡されたファイルを開く（.md ファイル関連付け用）
+  useEffect(() => {
+    (async () => {
+      try {
+        const initialFile: string | null = await invoke("get_initial_file");
+        if (initialFile) {
+          loadFileRef.current(initialFile);
+        }
+      } catch { /* no initial file */ }
+    })();
+  }, []);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -1300,6 +1417,7 @@ function App() {
         canRedo={toolbarCanRedo}
         theme={theme}
         editorVisible={editorVisible}
+        leftPanelVisible={leftPanelVisible}
         recentFiles={recentFiles}
         onOpenFolder={handleOpenFolder}
         onOpenFile={handleOpenFile}
@@ -1315,6 +1433,7 @@ function App() {
         onCopyRichText={handleCopyRichText}
         onPasteFromClipboard={handlePasteFromClipboard}
         onToggleEditor={() => setEditorVisible((v) => !v)}
+        onToggleLeftPanel={() => setLeftPanelVisible((v) => !v)}
         onOpenSettings={() => setShowSettings(true)}
       />
 
@@ -1336,31 +1455,40 @@ function App() {
 
       <div className="app-body">
         {/* 左パネル（フォルダ / アウトライン） */}
-        <div className="left-panel">
-          <div className="left-panel-tabs">
-            <button
-              className={`left-tab ${leftPanel === "folder" ? "active" : ""}`}
-              onClick={() => setLeftPanel("folder")}
-            >
-              フォルダ
-            </button>
-            <button
-              className={`left-tab ${leftPanel === "outline" ? "active" : ""}`}
-              onClick={() => setLeftPanel("outline")}
-            >
-              アウトライン
-            </button>
+        {leftPanelVisible && (
+          <div className="left-panel">
+            <div className="left-panel-tabs">
+              <button
+                className={`left-tab ${leftPanel === "folder" ? "active" : ""}`}
+                onClick={() => setLeftPanel("folder")}
+              >
+                フォルダ
+              </button>
+              <button
+                className={`left-tab ${leftPanel === "outline" ? "active" : ""}`}
+                onClick={() => setLeftPanel("outline")}
+              >
+                アウトライン
+              </button>
+              <button
+                className="left-tab left-panel-close"
+                onClick={() => setLeftPanelVisible(false)}
+                title="パネルを隠す"
+              >
+                ✕
+              </button>
+            </div>
+            {leftPanel === "folder" ? (
+              <FileTree
+                entries={fileTree}
+                activeFile={activeFile}
+                onSelectFile={loadFile}
+              />
+            ) : (
+              <OutlinePanel content={content} onHeadingClick={handleOutlineClick} />
+            )}
           </div>
-          {leftPanel === "folder" ? (
-            <FileTree
-              entries={fileTree}
-              activeFile={activeFile}
-              onSelectFile={loadFile}
-            />
-          ) : (
-            <OutlinePanel content={content} onHeadingClick={handleOutlineClick} />
-          )}
-        </div>
+        )}
 
         <div
           className="content-area"
@@ -1511,6 +1639,7 @@ function App() {
                   className="editor-textarea"
                   value={content}
                   onChange={(e) => handleContentChange(e.target.value)}
+                  onPaste={handlePasteImage}
                   placeholder="Markdownを入力するか、ファイルを開いてください..."
                 />
               </div>

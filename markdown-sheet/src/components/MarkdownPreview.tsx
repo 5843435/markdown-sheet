@@ -96,10 +96,10 @@ marked.use({
       const text = this.parser.parseInline(token.tokens);
       const id = makeHeadingId(token.text);
       const m = currentHeadingMappings[headingIdx++];
-      const attrs = m
-        ? ` data-source-start="${fmLineCount + m.startLine}" data-source-end="${fmLineCount + m.endLine}" data-editable="true"`
+      const srcAttrs = m
+        ? ` data-source-start="${fmLineCount + m.startLine}" data-source-end="${fmLineCount + m.endLine}"`
         : "";
-      return `<h${token.depth} id="${id}"${attrs}>${text}</h${token.depth}>`;
+      return `<h${token.depth} id="${id}"${srcAttrs} data-editable="true">${text}</h${token.depth}>`;
     },
     paragraph(this: { parser: { parseInline(tokens: unknown[]): string } }, token: { text: string; tokens: unknown[] }) {
       const text = this.parser.parseInline(token.tokens);
@@ -108,22 +108,22 @@ marked.use({
       if (/^<div class="math-block"/.test(text)) {
         return `<p>${text}</p>`;
       }
-      const attrs = m
-        ? ` data-source-start="${fmLineCount + m.startLine}" data-source-end="${fmLineCount + m.endLine}" data-editable="true"`
+      const srcAttrs = m
+        ? ` data-source-start="${fmLineCount + m.startLine}" data-source-end="${fmLineCount + m.endLine}"`
         : "";
-      return `<p${attrs}>${text}</p>`;
+      return `<p${srcAttrs} data-editable="true">${text}</p>`;
     },
     listitem(this: { parser: { parse(tokens: unknown[], loose?: boolean): string } }, token: { text: string; tokens: unknown[]; task: boolean; checked?: boolean; loose: boolean }) {
       // listitem はネストリスト・paragraph 等のブロック要素を含みうるため常に parse() を使う
       const text = this.parser.parse(token.tokens, !!token.loose);
       const m = currentListItemMappings[listItemIdx++];
-      const attrs = m
-        ? ` data-source-start="${fmLineCount + m.startLine}" data-source-end="${fmLineCount + m.endLine}" data-editable="true"`
+      const srcAttrs = m
+        ? ` data-source-start="${fmLineCount + m.startLine}" data-source-end="${fmLineCount + m.endLine}"`
         : "";
       const checkbox = token.task
         ? `<input type="checkbox"${token.checked ? " checked" : ""} disabled> `
         : "";
-      return `<li${attrs}>${checkbox}${text}</li>\n`;
+      return `<li${srcAttrs} data-editable="true">${checkbox}${text}</li>\n`;
     },
     table(token: { header: Array<{ text: string; align: string | null }>; rows: Array<Array<{ text: string; align: string | null }>> }) {
       const m = currentTableMappings[tableIdx];
@@ -275,9 +275,14 @@ const MarkdownPreview: FC<Props> = ({
   const [previewLineH, setPreviewLineH] = useState(
     () => parseFloat(localStorage.getItem("md-preview-lh") || "1.8")
   );
-
+  const [previewEditable, setPreviewEditable] = useState(
+    () => localStorage.getItem("md-preview-editable") !== "false"
+  );
+  const previewEditableRef = useRef(previewEditable);
+  previewEditableRef.current = previewEditable;
   useEffect(() => { localStorage.setItem("md-preview-font", previewFont); }, [previewFont]);
   useEffect(() => { localStorage.setItem("md-preview-size", String(previewSize)); }, [previewSize]);
+  useEffect(() => { localStorage.setItem("md-preview-editable", String(previewEditable)); }, [previewEditable]);
   useEffect(() => { localStorage.setItem("md-preview-lh", String(previewLineH)); }, [previewLineH]);
 
   // Markdown レンダリング（YAML front matter → 数式前処理 → テーブル正規化 → marked）
@@ -327,15 +332,11 @@ const MarkdownPreview: FC<Props> = ({
     const div = mdContentRef.current;
     if (div && !isInlineEditingRef.current) {
       div.innerHTML = html;
-      // 全 [data-editable] 要素を常時 contentEditable にして WYSIWYG 感を出す
-      div.querySelectorAll<HTMLElement>("[data-editable='true']").forEach((el) => {
-        el.contentEditable = "true";
-      });
     }
 
-    // 1.5) 相対画像パスをローカルファイルから blob URL に変換
-    if (div && filePath) {
-      const dir = filePath.replace(/[\\/][^\\/]+$/, "");
+    // 1.5) ローカル画像パスを blob URL に変換（相対パス＋絶対パス両対応）
+    if (div) {
+      const dir = filePath ? filePath.replace(/[\\/][^\\/]+$/, "").replace(/\\/g, "/") : "";
       const imgs = Array.from(div.querySelectorAll<HTMLImageElement>("img"));
       const blobUrls = blobUrlsRef.current;
 
@@ -345,15 +346,25 @@ const MarkdownPreview: FC<Props> = ({
           if (!src) continue;
           if (/^(https?:|data:|blob:)/i.test(src)) continue;
 
-          // 相対パスを絶対パスに解決
-          const combined = dir.replace(/\\/g, "/") + "/" + src;
-          const parts = combined.split("/");
-          const resolved: string[] = [];
-          for (const p of parts) {
-            if (p === "..") resolved.pop();
-            else if (p !== ".") resolved.push(p);
+          // 絶対パスか相対パスかを判定
+          const isAbsolute = /^[A-Za-z]:[\\/]|^\//.test(src);
+          let absolutePath: string;
+
+          if (isAbsolute) {
+            absolutePath = src.replace(/\\/g, "/");
+          } else if (dir) {
+            // 相対パスを絶対パスに解決
+            const combined = dir + "/" + src;
+            const parts = combined.split("/");
+            const resolved: string[] = [];
+            for (const p of parts) {
+              if (p === "..") resolved.pop();
+              else if (p !== ".") resolved.push(p);
+            }
+            absolutePath = resolved.join("/");
+          } else {
+            continue; // 無題ファイルで相対パス → 解決不可
           }
-          const absolutePath = resolved.join("/");
 
           try {
             const data = await readFile(absolutePath);
@@ -619,6 +630,25 @@ const MarkdownPreview: FC<Props> = ({
     };
   }, [html, filePath, ref]);
 
+  // contentEditable を一元管理: html 変更時・モード切替時の両方で確実に設定する。
+  // メイン effect（innerHTML 設定）より後に宣言されているため、
+  // 同一レンダーで両方発火しても innerHTML → contentEditable の順序が保証される。
+  useEffect(() => {
+    const div = mdContentRef.current;
+    if (!div) return;
+    const editable = previewEditable ? "true" : "false";
+    div.querySelectorAll<HTMLElement>("[data-editable='true']").forEach((el) => {
+      el.contentEditable = editable;
+    });
+    // 閲覧モードへ切替時に編集中なら取消
+    if (!previewEditable && editingElementRef.current) {
+      editingElementRef.current.innerHTML = editingOriginalHtmlRef.current;
+      editingElementRef.current.blur();
+      editingElementRef.current = null;
+      isInlineEditingRef.current = false;
+    }
+  }, [previewEditable, html]);
+
   // --- インライン編集 ---
   const cancelInlineEdit = useCallback(() => {
     const element = editingElementRef.current;
@@ -730,8 +760,9 @@ const MarkdownPreview: FC<Props> = ({
     const container = mdContentRef.current;
     if (!container) return;
 
-    // --- 見出し・段落・リスト: focusin で編集開始（常時 contentEditable なのでクリックだけでカーソルが立つ） ---
+    // --- 見出し・段落・リスト: focusin で編集開始 ---
     const handleFocusIn = (e: FocusEvent) => {
+      if (!previewEditableRef.current) return;
       const target = (e.target as HTMLElement).closest<HTMLElement>(
         "[data-editable='true']"
       );
@@ -758,6 +789,7 @@ const MarkdownPreview: FC<Props> = ({
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (!previewEditableRef.current) return;
       const element = editingElementRef.current;
       if (!element) return;
       if (e.key === "Escape") {
@@ -875,10 +907,18 @@ const MarkdownPreview: FC<Props> = ({
           <option value={2.0}>行間 2.0</option>
           <option value={2.4}>行間 2.4</option>
         </select>
+        <div style={{ flex: 1 }} />
+        <button
+          className={`preview-edit-toggle ${previewEditable ? "editing" : ""}`}
+          onClick={() => setPreviewEditable((v) => !v)}
+          title={previewEditable ? "閲覧モードに切替" : "編集モードに切替"}
+        >
+          {previewEditable ? "✏ 編集" : "👁 閲覧"}
+        </button>
       </div>
       <div
         ref={ref}
-        className="md-preview"
+        className={`md-preview${previewEditable ? "" : " readonly"}`}
         style={previewStyle}
       >
         {frontMatter && (

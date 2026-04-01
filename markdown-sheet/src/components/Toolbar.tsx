@@ -8,6 +8,7 @@ interface Props {
   canRedo: boolean;
   theme: "light" | "dark";
   editorVisible: boolean;
+  leftPanelVisible: boolean;
   recentFiles: RecentFile[];
   onOpenFolder: () => void;
   onOpenFile: () => void;
@@ -23,6 +24,7 @@ interface Props {
   onCopyRichText: () => void;
   onPasteFromClipboard: () => void;
   onToggleEditor: () => void;
+  onToggleLeftPanel: () => void;
   onOpenSettings: () => void;
 }
 
@@ -32,6 +34,7 @@ const Toolbar: FC<Props> = ({
   canRedo,
   theme,
   editorVisible,
+  leftPanelVisible,
   recentFiles,
   onOpenFolder,
   onOpenFile,
@@ -47,6 +50,7 @@ const Toolbar: FC<Props> = ({
   onCopyRichText,
   onPasteFromClipboard,
   onToggleEditor,
+  onToggleLeftPanel,
   onOpenSettings,
 }) => {
   const [showRecent, setShowRecent] = useState(false);
@@ -139,6 +143,12 @@ const Toolbar: FC<Props> = ({
 
         {/* ===== 表示グループ ===== */}
         <span className="toolbar-group-label">表示</span>
+        <button
+          onClick={onToggleLeftPanel}
+          title={leftPanelVisible ? "パネルを隠す" : "パネルを表示"}
+        >
+          {leftPanelVisible ? "◁ パネル" : "▷ パネル"}
+        </button>
         <button
           onClick={onToggleEditor}
           title={`エディタを${editorVisible ? "非表示" : "表示"} (Ctrl+\\)`}
