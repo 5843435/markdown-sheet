@@ -22,9 +22,13 @@ Tauri 2 + React 製の Windows デスクトップ向け Markdown エディタ。
 
 [markdown-sheet-v1.4.0.exe.dat](https://github.com/5843435/markdown-sheet/raw/main/markdown-sheet-v1.4.0.exe.dat)
 
-ダウンロード後、ファイル名を `markdown-sheet.exe` にリネームして実行してください。
-
 > GitHub Releases からのダウンロードがブロックされる環境向けに `.dat` 拡張子で配布しています。
+
+### セットアップ手順
+1. 上のリンクからダウンロード
+2. ファイル名を `markdown-sheet.exe` にリネーム
+3. **exe を右クリック → プロパティ → 「セキュリティ: このファイルは…」の「許可する」にチェック → OK**
+4. ダブルクリックで実行
 
 ## 開発環境セットアップ
 
