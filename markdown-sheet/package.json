@@ -13,6 +13,7 @@
     "@tauri-apps/api": "^2.2.0",
     "@tauri-apps/plugin-dialog": "^2.2.0",
     "@tauri-apps/plugin-fs": "^2.2.0",
+    "docx": "^9.6.1",
     "highlight.js": "^11.11.1",
     "html2pdf.js": "^0.14.0",
     "katex": "^0.16.28",

@@ -801,6 +801,39 @@ function App() {
     }
   }, [activeFile]);
 
+  // --- Export Word ---
+  const handleExportWord = useCallback(async () => {
+    const el = previewRef.current;
+    if (!el) return;
+    try {
+      const { htmlToDocx } = await import("./lib/htmlToDocx");
+      const { Packer } = await import("docx");
+
+      const doc = await htmlToDocx(el);
+      const blob = await Packer.toBlob(doc);
+      const arrayBuffer = await blob.arrayBuffer();
+
+      const nowW = new Date();
+      const tsW = nowW.getFullYear().toString() + String(nowW.getMonth() + 1).padStart(2, "0") + String(nowW.getDate()).padStart(2, "0") + String(nowW.getHours()).padStart(2, "0") + String(nowW.getMinutes()).padStart(2, "0");
+      const baseName = activeFile
+        ? activeFile.split(/[\\/]/).pop()?.replace(/\.md$/i, "") || ""
+        : "";
+      const fileName = baseName || tsW;
+
+      const path = await save({
+        filters: [{ name: "Word", extensions: ["docx"] }],
+        defaultPath: `${fileName}.docx`,
+      });
+      if (path) {
+        await writeFile(path, new Uint8Array(arrayBuffer));
+        showToast("Wordをエクスポートしました");
+      }
+    } catch (error) {
+      console.error("Word export error:", error);
+      showToast("Wordエクスポートに失敗しました", true);
+    }
+  }, [activeFile]);
+
   // --- CSV Import ---
   const handleImportCsv = useCallback(async () => {
     try {
@@ -1430,6 +1463,7 @@ function App() {
         onToggleTheme={toggleTheme}
         onExportPdf={handleExportPdf}
         onExportHtml={handleExportHtml}
+        onExportWord={handleExportWord}
         onCopyRichText={handleCopyRichText}
         onPasteFromClipboard={handlePasteFromClipboard}
         onToggleEditor={() => setEditorVisible((v) => !v)}
