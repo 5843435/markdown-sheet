@@ -20,7 +20,7 @@ Tauri 2 + React 製の Windows デスクトップ向け Markdown エディタ。
 
 **Windows 64bit ポータブル版（インストール不要）:**
 
-[markdown-sheet-v1.4.0.exe.dat](https://github.com/5843435/markdown-sheet/raw/main/markdown-sheet-v1.4.0.exe.dat)
+[markdown-sheet-v1.5.0.exe.dat](https://github.com/5843435/markdown-sheet/raw/main/markdown-sheet-v1.5.0.exe.dat)
 
 > GitHub Releases からのダウンロードがブロックされる環境向けに `.dat` 拡張子で配布しています。
 
