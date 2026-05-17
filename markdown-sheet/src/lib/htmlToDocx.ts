@@ -210,11 +210,10 @@ export async function htmlToDocx(
   container: HTMLElement,
   options?: { fontKey?: string; fontSize?: number }
 ): Promise<Document> {
-  // プレビューのフォント設定を反映
+  // プレビューのフォント設定を反映（Word向けは少し小さめ: 9pt = 18 half-points）
   const fontKey = options?.fontKey || localStorage.getItem("md-preview-font") || "meiryo";
-  const sizePx = options?.fontSize || parseInt(localStorage.getItem("md-preview-size") || "14");
   docxFont = DOCX_FONT_MAP[fontKey] || "Meiryo";
-  docxFontSize = sizePx * 2; // px → half-points (概算: 14px ≈ 28 half-points = 14pt)
+  docxFontSize = 18; // 9pt — Word向けに小さめ固定
 
   const children: (Paragraph | Table)[] = [];
 
@@ -322,11 +321,30 @@ export async function htmlToDocx(
 
     // Mermaid コンテナ（SVG画像として）
     if (el.classList.contains("mermaid-placeholder") || el.classList.contains("mermaid-container")) {
+      // ライブ DOM 側の SVG を探す（getBoundingClientRect が正しい値を返すため）
+      const placeholders = Array.from(container.closest(".md-preview")?.querySelectorAll(".mermaid-placeholder, .mermaid-container") || []);
+      const elIdx = Array.from(nodes).filter(n => n.classList.contains("mermaid-placeholder") || n.classList.contains("mermaid-container")).indexOf(el);
+      const livePlaceholder = placeholders[elIdx] || el;
+      const liveSvg = livePlaceholder.querySelector("svg");
       const svg = el.querySelector("svg");
-      if (svg) {
+      if (svg && liveSvg) {
         try {
-          const svgStr = new XMLSerializer().serializeToString(svg);
-          const svgBlob = new Blob([svgStr], { type: "image/svg+xml" });
+          // foreignObject を除去した SVG を作成（Canvas が foreignObject を描画できないため）
+          const cloneSvg = liveSvg.cloneNode(true) as SVGSVGElement;
+          cloneSvg.querySelectorAll("foreignObject").forEach((fo) => {
+            const text = fo.textContent?.trim() || "";
+            if (!text) { fo.remove(); return; }
+            const svgText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            svgText.setAttribute("x", fo.getAttribute("x") || "0");
+            svgText.setAttribute("y", String(parseFloat(fo.getAttribute("y") || "0") + 14));
+            svgText.setAttribute("font-size", "14");
+            svgText.setAttribute("font-family", "Meiryo, sans-serif");
+            svgText.textContent = text;
+            fo.parentNode?.replaceChild(svgText, fo);
+          });
+
+          const svgStr = new XMLSerializer().serializeToString(cloneSvg);
+          const svgBlob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
           const url = URL.createObjectURL(svgBlob);
 
           // Canvas でPNGに変換
@@ -337,9 +355,9 @@ export async function htmlToDocx(
             img.src = url;
           });
 
+          const w = liveSvg.getBoundingClientRect().width || 800;
+          const h = liveSvg.getBoundingClientRect().height || 400;
           const canvas = document.createElement("canvas");
-          const w = svg.getBoundingClientRect().width || 800;
-          const h = svg.getBoundingClientRect().height || 400;
           canvas.width = w * 2;
           canvas.height = h * 2;
           const ctx = canvas.getContext("2d")!;
@@ -401,7 +419,7 @@ export async function htmlToDocx(
       {
         properties: {
           page: {
-            margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
+            margin: { top: 720, right: 720, bottom: 720, left: 720 },
           },
         },
         children,

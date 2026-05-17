@@ -26,6 +26,8 @@ interface Props {
   onPasteFromClipboard: () => void;
   onToggleEditor: () => void;
   onToggleLeftPanel: () => void;
+  isPreviewOnly: boolean;
+  onTogglePreviewOnly: () => void;
   onOpenSettings: () => void;
 }
 
@@ -53,6 +55,8 @@ const Toolbar: FC<Props> = ({
   onPasteFromClipboard,
   onToggleEditor,
   onToggleLeftPanel,
+  isPreviewOnly,
+  onTogglePreviewOnly,
   onOpenSettings,
 }) => {
   const [showRecent, setShowRecent] = useState(false);
@@ -156,6 +160,13 @@ const Toolbar: FC<Props> = ({
           title={`エディタを${editorVisible ? "非表示" : "表示"} (Ctrl+\\)`}
         >
           {editorVisible ? "◀ エディタ" : "▶ エディタ"}
+        </button>
+        <button
+          onClick={onTogglePreviewOnly}
+          className={isPreviewOnly ? "active-dropdown" : ""}
+          title="プレビューだけを全画面表示 (F11)"
+        >
+          ⛶ 全画面プレビュー (F11)
         </button>
 
         <div className="toolbar-separator" />

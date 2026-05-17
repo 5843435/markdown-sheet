@@ -271,6 +271,24 @@ function App() {
   const [showSearch, setShowSearch] = useState(false);
   const [editorVisible, setEditorVisible] = useState(true);
   const [leftPanelVisible, setLeftPanelVisible] = useState(true);
+
+  // プレビュー専用モード切替時に直前の表示状態を覚えておくための保存箱
+  const preFullPreviewRef = useRef<{ editor: boolean; panel: boolean } | null>(null);
+  const isPreviewOnly = !editorVisible && !leftPanelVisible;
+  const togglePreviewOnly = useCallback(() => {
+    if (!editorVisible && !leftPanelVisible) {
+      // 既にプレビュー専用モード → 直前の状態に戻す
+      const prev = preFullPreviewRef.current ?? { editor: true, panel: true };
+      setEditorVisible(prev.editor);
+      setLeftPanelVisible(prev.panel);
+      preFullPreviewRef.current = null;
+    } else {
+      // プレビュー専用モードに入る → 現状を保存して両方非表示
+      preFullPreviewRef.current = { editor: editorVisible, panel: leftPanelVisible };
+      setEditorVisible(false);
+      setLeftPanelVisible(false);
+    }
+  }, [editorVisible, leftPanelVisible]);
   const [leftPanel, setLeftPanel] = useState<"folder" | "outline">("folder");
 
   // --- Auto-save ---
@@ -379,6 +397,8 @@ function App() {
   /** 現在の作業状態を現タブスロットに保存（refから読み取り → staleクロージャ回避） */
   const saveCurrentToTab = useCallback(() => {
     const id = activeTabIdRef.current;
+    const editorScrollTop = editorRef.current?.scrollTop;
+    const previewScrollTop = previewRef.current?.scrollTop;
     setTabs((prev) =>
       prev.map((t) =>
         t.id !== id
@@ -389,9 +409,22 @@ function App() {
               dirty: dirtyRef.current,
               contentUndoStack: [...undoStackRef.current],
               contentRedoStack: [...redoStackRef.current],
+              editorScrollTop: editorScrollTop ?? t.editorScrollTop,
+              previewScrollTop: previewScrollTop ?? t.previewScrollTop,
             }
       )
     );
+  }, []);
+
+  /** textarea / preview の DOM 要素は使い回されるので、タブ切替時にスクロール位置を明示的に適用する。
+   *  content 更新後の scrollHeight 反映を待つため rAF 2回。 */
+  const applyTabScroll = useCallback((editorTop: number, previewTop: number) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (editorRef.current) editorRef.current.scrollTop = editorTop;
+        if (previewRef.current) previewRef.current.scrollTop = previewTop;
+      });
+    });
   }, []);
 
   /** タブを切り替える */
@@ -409,8 +442,9 @@ function App() {
       redoStackRef.current = [...newTab.contentRedoStack];
       setContentUndoAvailable(newTab.contentUndoStack.length > 0);
       setContentRedoAvailable(newTab.contentRedoStack.length > 0);
+      applyTabScroll(newTab.editorScrollTop ?? 0, newTab.previewScrollTop ?? 0);
     },
-    [saveCurrentToTab]
+    [saveCurrentToTab, applyTabScroll]
   );
 
   /** 新しい空タブを開く */
@@ -426,7 +460,8 @@ function App() {
     redoStackRef.current = [];
     setContentUndoAvailable(false);
     setContentRedoAvailable(false);
-  }, [saveCurrentToTab]);
+    applyTabScroll(0, 0);
+  }, [saveCurrentToTab, applyTabScroll]);
 
   /** タブを閉じる */
   const closeTab = useCallback(
@@ -459,11 +494,12 @@ function App() {
         setContentUndoAvailable(newActive.contentUndoStack.length > 0);
         setContentRedoAvailable(newActive.contentRedoStack.length > 0);
         setActiveTabId(newActive.id);
+        applyTabScroll(newActive.editorScrollTop ?? 0, newActive.previewScrollTop ?? 0);
       }
 
       setTabs(remaining);
     },
-    [saveCurrentToTab]
+    [saveCurrentToTab, applyTabScroll]
   );
 
   // ====== File Loading ======
@@ -486,9 +522,15 @@ function App() {
           text = await readTextFile(filePath);
         }
 
-        // 現タブが空（未編集・ファイル未割当）なら上書き、そうでなければ新タブで開く
+        // 現タブが空（未編集・ファイル未割当）なら上書き、そうでなければ新タブで開く。
+        // タブスロットの content/dirty はまだ saveCurrentToTab されていない可能性があるので、
+        // 編集中の最新状態は contentRef / dirtyRef を見る。
         const currentTab = tabsRef.current.find((t) => t.id === activeTabIdRef.current);
-        const isCurrentEmpty = currentTab && !currentTab.filePath && !currentTab.dirty && !currentTab.content;
+        const isCurrentEmpty =
+          currentTab &&
+          !currentTab.filePath &&
+          !dirtyRef.current &&
+          !contentRef.current;
 
         if (isCurrentEmpty) {
           // 空タブに上書き
@@ -511,10 +553,13 @@ function App() {
                     dirty: false,
                     contentUndoStack: [],
                     contentRedoStack: [],
+                    editorScrollTop: 0,
+                    previewScrollTop: 0,
                   }
                 : t
             )
           );
+          applyTabScroll(0, 0);
         } else {
           // 新タブで開く
           saveCurrentToTab();
@@ -533,6 +578,7 @@ function App() {
           setActiveFile(filePath);
           undoStackRef.current = [];
           redoStackRef.current = [];
+          applyTabScroll(0, 0);
           setContentUndoAvailable(false);
           setContentRedoAvailable(false);
         }
@@ -543,7 +589,7 @@ function App() {
         showToast("ファイル読み込みに失敗しました", true);
       }
     },
-    [switchToTab, addRecentFile, saveCurrentToTab]
+    [switchToTab, addRecentFile, saveCurrentToTab, applyTabScroll]
   );
 
   // --- Auto-save interval ---
@@ -751,11 +797,72 @@ function App() {
     const el = previewRef.current;
     if (!el) return;
     try {
-      // Clone DOM and strip Mermaid UI controls (zoom, SVG buttons, AI panel)
-      // that don't function in standalone HTML
+      // Clone DOM and strip Mermaid UI controls
       const clone = el.cloneNode(true) as HTMLElement;
       clone.querySelectorAll(".mermaid-actions, .mermaid-ai-panel").forEach((n) => n.remove());
+
+      // 画像を data URI に変換（blob: や相対パスをHTMLに埋め込む）
+      const imgs = clone.querySelectorAll<HTMLImageElement>("img");
+      for (const img of Array.from(imgs)) {
+        try {
+          // 元のDOM側の img から blob URL を取得（clone側は src が同じ）
+          const origImg = el.querySelector<HTMLImageElement>(`img[src="${img.getAttribute("src")}"]`) || img;
+          const src = origImg.src;
+          if (!src || src.startsWith("data:")) continue;
+          const resp = await fetch(src);
+          const blob = await resp.blob();
+          const reader = new FileReader();
+          const dataUri = await new Promise<string>((resolve) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+          img.src = dataUri;
+        } catch { /* skip */ }
+      }
+
+      // Mermaid SVG を inline PNG に変換
+      const mermaidContainers = clone.querySelectorAll(".mermaid-rendered");
+      for (const container of Array.from(mermaidContainers)) {
+        const svg = container.querySelector("svg");
+        if (!svg) continue;
+        try {
+          const origSvg = el.querySelector(`.mermaid-rendered svg`);
+          const w = origSvg?.getBoundingClientRect().width || 800;
+          const h = origSvg?.getBoundingClientRect().height || 400;
+          const svgStr = new XMLSerializer().serializeToString(svg);
+          const svgBlob = new Blob([svgStr], { type: "image/svg+xml" });
+          const url = URL.createObjectURL(svgBlob);
+          const image = new Image();
+          await new Promise<void>((res, rej) => { image.onload = () => res(); image.onerror = rej; image.src = url; });
+          const canvas = document.createElement("canvas");
+          canvas.width = w * 2; canvas.height = h * 2;
+          const ctx = canvas.getContext("2d")!;
+          ctx.scale(2, 2);
+          ctx.drawImage(image, 0, 0, w, h);
+          URL.revokeObjectURL(url);
+          const pngDataUri = canvas.toDataURL("image/png");
+          container.innerHTML = `<img src="${pngDataUri}" style="max-width:100%;" />`;
+        } catch { /* skip */ }
+      }
+
       const htmlContent = clone.innerHTML;
+
+      // プレビューのフォント設定を継承
+      const fontKey = localStorage.getItem("md-preview-font") || "meiryo";
+      const fontSize = localStorage.getItem("md-preview-size") || "14";
+      const lineH = localStorage.getItem("md-preview-lh") || "1.8";
+      const fontMap: Record<string, string> = {
+        system: '"Segoe UI", "Meiryo", sans-serif',
+        meiryo: '"Meiryo", "メイリオ", sans-serif',
+        pgothic: '"MS PGothic", "ＭＳ Ｐゴシック", sans-serif',
+        yugothic: '"Yu Gothic", "游ゴシック", sans-serif',
+        yumin: '"Yu Mincho", "游明朝", serif',
+        msmin: '"MS PMincho", "ＭＳ Ｐ明朝", serif',
+        serif: '"Georgia", serif',
+        mono: '"Consolas", monospace',
+      };
+      const fontFamily = fontMap[fontKey] || fontMap.meiryo;
+
       const nowH = new Date();
       const tsH = nowH.getFullYear().toString() + String(nowH.getMonth() + 1).padStart(2, "0") + String(nowH.getDate()).padStart(2, "0") + String(nowH.getHours()).padStart(2, "0") + String(nowH.getMinutes()).padStart(2, "0");
       const title = activeFile
@@ -771,7 +878,7 @@ function App() {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${safeTitle}</title>
     <style>
-      body { font-family: "Segoe UI", "Meiryo", sans-serif; line-height: 1.8; color: #333; max-width: 800px; margin: 0 auto; padding: 2rem; }
+      body { font-family: ${fontFamily}; font-size: ${fontSize}px; line-height: ${lineH}; color: #333; max-width: 1100px; margin: 0 auto; padding: 1rem 2rem; }
       pre { background-color: #f6f8fa; padding: 16px; border-radius: 6px; overflow-x: auto; }
       code { font-family: "Consolas", monospace; font-size: 85%; background-color: rgba(175,184,193,0.2); padding: 0.2em 0.4em; border-radius: 6px; }
       pre code { background: none; padding: 0; }
@@ -1287,7 +1394,11 @@ function App() {
   handleContentChangeRef.current = handleContentChange;
 
   // 起動時にコマンドライン引数で渡されたファイルを開く（.md ファイル関連付け用）
+  // + 2回目以降の起動は single-instance プラグインが open-file イベントを送る
   useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    let disposed = false;
+
     (async () => {
       try {
         const initialFile: string | null = await invoke("get_initial_file");
@@ -1295,16 +1406,40 @@ function App() {
           loadFileRef.current(initialFile);
         }
       } catch { /* no initial file */ }
+
+      // 既存インスタンスにファイルが渡された場合のリスナー
+      try {
+        const { listen } = await import("@tauri-apps/api/event");
+        const u = await listen<string>("open-file", (event) => {
+          if (event.payload) {
+            loadFileRef.current(event.payload);
+          }
+        });
+        if (disposed) {
+          u();
+        } else {
+          unlisten = u;
+        }
+      } catch { /* ignore */ }
     })();
+
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
   }, []);
 
   useEffect(() => {
+    // StrictMode の double-mount 対策: async が解決する前に cleanup が走ると
+    // unlisten が undefined のまま2個目のリスナが登録されて重複発火する。
+    // disposed フラグで「もう破棄済みなら解除する」を保証する。
     let unlisten: (() => void) | undefined;
+    let disposed = false;
 
     (async () => {
       try {
         const { getCurrentWebview } = await import("@tauri-apps/api/webview");
-        unlisten = await getCurrentWebview().onDragDropEvent(async (event) => {
+        const u = await getCurrentWebview().onDragDropEvent(async (event) => {
           if (event.payload.type !== "drop") return;
           const paths = event.payload.paths;
           if (!paths || paths.length === 0) return;
@@ -1339,12 +1474,20 @@ function App() {
             }
           }
         });
+        if (disposed) {
+          u();
+        } else {
+          unlisten = u;
+        }
       } catch (e) {
         console.error("Failed to register drag-drop handler:", e);
       }
     })();
 
-    return () => { unlisten?.(); };
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
   }, []);
 
   // --- Keyboard shortcuts ---
@@ -1386,6 +1529,9 @@ function App() {
           if (!window.confirm(`"${name}" の変更は保存されていません。閉じますか？`)) return;
         }
         closeTab(activeTabIdRef.current);
+      } else if (e.key === "F11" || (e.key === "Escape" && isPreviewOnly)) {
+        e.preventDefault();
+        togglePreviewOnly();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -1398,6 +1544,8 @@ function App() {
     handleInsertFormatting,
     openNewTab,
     closeTab,
+    togglePreviewOnly,
+    isPreviewOnly,
   ]);
 
   // --- Close dropdowns on outside click ---
@@ -1444,40 +1592,46 @@ function App() {
 
   return (
     <div className="app">
-      <Toolbar
-        dirty={dirty}
-        canUndo={toolbarCanUndo}
-        canRedo={toolbarCanRedo}
-        theme={theme}
-        editorVisible={editorVisible}
-        leftPanelVisible={leftPanelVisible}
-        recentFiles={recentFiles}
-        onOpenFolder={handleOpenFolder}
-        onOpenFile={handleOpenFile}
-        onOpenRecent={loadFile}
-        onSave={handleSave}
-        onSaveAs={handleSaveAs}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        onToggleSearch={() => setShowSearch((s) => !s)}
-        onToggleTheme={toggleTheme}
-        onExportPdf={handleExportPdf}
-        onExportHtml={handleExportHtml}
-        onExportWord={handleExportWord}
-        onCopyRichText={handleCopyRichText}
-        onPasteFromClipboard={handlePasteFromClipboard}
-        onToggleEditor={() => setEditorVisible((v) => !v)}
-        onToggleLeftPanel={() => setLeftPanelVisible((v) => !v)}
-        onOpenSettings={() => setShowSettings(true)}
-      />
+      {!isPreviewOnly && (
+        <Toolbar
+          dirty={dirty}
+          canUndo={toolbarCanUndo}
+          canRedo={toolbarCanRedo}
+          theme={theme}
+          editorVisible={editorVisible}
+          leftPanelVisible={leftPanelVisible}
+          recentFiles={recentFiles}
+          onOpenFolder={handleOpenFolder}
+          onOpenFile={handleOpenFile}
+          onOpenRecent={loadFile}
+          onSave={handleSave}
+          onSaveAs={handleSaveAs}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          onToggleSearch={() => setShowSearch((s) => !s)}
+          onToggleTheme={toggleTheme}
+          onExportPdf={handleExportPdf}
+          onExportHtml={handleExportHtml}
+          onExportWord={handleExportWord}
+          onCopyRichText={handleCopyRichText}
+          onPasteFromClipboard={handlePasteFromClipboard}
+          onToggleEditor={() => setEditorVisible((v) => !v)}
+          onToggleLeftPanel={() => setLeftPanelVisible((v) => !v)}
+          isPreviewOnly={isPreviewOnly}
+          onTogglePreviewOnly={togglePreviewOnly}
+          onOpenSettings={() => setShowSettings(true)}
+        />
+      )}
 
-      <TabBar
-        tabs={tabs}
-        activeTabId={activeTabId}
-        onSelectTab={switchToTab}
-        onCloseTab={closeTab}
-        onNewTab={openNewTab}
-      />
+      {!isPreviewOnly && (
+        <TabBar
+          tabs={tabs}
+          activeTabId={activeTabId}
+          onSelectTab={switchToTab}
+          onCloseTab={closeTab}
+          onNewTab={openNewTab}
+        />
+      )}
 
       {showSearch && (
         <SearchReplace
@@ -1687,6 +1841,8 @@ function App() {
             aiSettings={aiSettings}
             onUpdateMermaidBlock={handleUpdateMermaidBlock}
             onInlineEdit={handleInlineEdit}
+            isPreviewOnly={isPreviewOnly}
+            onExitPreviewOnly={togglePreviewOnly}
           />
         </div>
       </div>

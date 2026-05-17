@@ -46,4 +46,6 @@ export interface Tab {
   dirty: boolean;
   contentUndoStack: string[];
   contentRedoStack: string[];
+  editorScrollTop?: number;
+  previewScrollTop?: number;
 }

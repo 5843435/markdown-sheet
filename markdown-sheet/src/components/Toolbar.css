@@ -24,6 +24,9 @@
   align-items: center;
   gap: 4px;
   transition: background 0.15s, border-color 0.15s;
+  /* 狭いウィンドウでも文字を縮めて折り返さない（横スクロールで逃がす） */
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .toolbar button:hover:not(:disabled) {
@@ -42,6 +45,18 @@
   align-items: center;
   gap: 4px;
   -webkit-app-region: no-drag;
+  /* ボタンが縮まらず溢れたときに横スクロール可能にする */
+  overflow-x: auto;
+  overflow-y: hidden;
+  min-width: 0;
+  flex: 1 1 auto;
+  scrollbar-width: thin;
+}
+
+.toolbar-left::-webkit-scrollbar { height: 6px; }
+.toolbar-left::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
 }
 
 .toolbar-separator {
@@ -49,6 +64,7 @@
   height: 20px;
   background: var(--border);
   margin: 0 6px;
+  flex-shrink: 0;
 }
 
 .toolbar-right {
@@ -56,6 +72,7 @@
   align-items: center;
   gap: 8px;
   -webkit-app-region: no-drag;
+  flex-shrink: 0;
 }
 
 .file-name {

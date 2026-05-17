@@ -114,16 +114,20 @@ marked.use({
       return `<p${srcAttrs} data-editable="true">${text}</p>`;
     },
     listitem(this: { parser: { parse(tokens: unknown[], loose?: boolean): string } }, token: { text: string; tokens: unknown[]; task: boolean; checked?: boolean; loose: boolean }) {
-      // listitem はネストリスト・paragraph 等のブロック要素を含みうるため常に parse() を使う
+      // listitem はネストリスト・paragraph 等のブロック要素を含みうるため常に parse() を使う。
+      // task 用の checkbox は inline token として token.tokens に含まれており parse() 内で
+      // checkbox レンダラ経由で出力される。ここでは prepend しない（二重描画になる）。
       const text = this.parser.parse(token.tokens, !!token.loose);
       const m = currentListItemMappings[listItemIdx++];
       const srcAttrs = m
         ? ` data-source-start="${fmLineCount + m.startLine}" data-source-end="${fmLineCount + m.endLine}"`
         : "";
-      const checkbox = token.task
-        ? `<input type="checkbox"${token.checked ? " checked" : ""} disabled> `
-        : "";
-      return `<li${srcAttrs} data-editable="true">${checkbox}${text}</li>\n`;
+      const cls = token.task ? ` class="md-task-li"` : "";
+      return `<li${srcAttrs}${cls} data-editable="true">${text}</li>\n`;
+    },
+    checkbox({ checked }: { checked: boolean }) {
+      // プレビュー側で直接トグル出来るようにクリッカブルにする（disabled を付けない）
+      return `<input type="checkbox" class="md-task-checkbox"${checked ? " checked" : ""}> `;
     },
     table(token: { header: Array<{ text: string; align: string | null }>; rows: Array<Array<{ text: string; align: string | null }>> }) {
       const m = currentTableMappings[tableIdx];
@@ -224,6 +228,8 @@ interface Props {
   aiSettings?: AiSettings;
   onUpdateMermaidBlock?: (blockIndex: number, newSource: string) => void;
   onInlineEdit?: (startLine: number, endLine: number, newMarkdown: string) => void;
+  isPreviewOnly?: boolean;
+  onExitPreviewOnly?: () => void;
 }
 
 const MarkdownPreview: FC<Props> = ({
@@ -233,6 +239,8 @@ const MarkdownPreview: FC<Props> = ({
   aiSettings,
   onUpdateMermaidBlock,
   onInlineEdit,
+  isPreviewOnly,
+  onExitPreviewOnly,
 }) => {
   const [html, setHtml] = useState("");
   const [frontMatter, setFrontMatter] = useState<Record<string, string> | null>(null);
@@ -273,7 +281,7 @@ const MarkdownPreview: FC<Props> = ({
     () => parseInt(localStorage.getItem("md-preview-size") || "14")
   );
   const [previewLineH, setPreviewLineH] = useState(
-    () => parseFloat(localStorage.getItem("md-preview-lh") || "1.8")
+    () => parseFloat(localStorage.getItem("md-preview-lh") || "1.6")
   );
   const [previewEditable, setPreviewEditable] = useState(
     () => localStorage.getItem("md-preview-editable") !== "false"
@@ -845,16 +853,49 @@ const MarkdownPreview: FC<Props> = ({
       setTableCtxMenu({ visible: true, x: e.clientX, y: e.clientY, tableIndex: ti, row, col });
     };
 
+    // --- タスクリストのチェックボックス: クリックでソース側の [ ] / [x] を反転 ---
+    const handleTaskCheckboxClick = (e: MouseEvent) => {
+      const cb = (e.target as HTMLElement).closest<HTMLInputElement>(
+        "input.md-task-checkbox"
+      );
+      if (!cb) return;
+      const li = cb.closest<HTMLElement>("li[data-source-start]");
+      if (!li) return;
+      e.preventDefault();
+      const startLine = parseInt(li.getAttribute("data-source-start") || "-1", 10);
+      const endLineAttr = li.getAttribute("data-source-end");
+      const endLine = endLineAttr ? parseInt(endLineAttr, 10) : startLine;
+      if (startLine < 0) return;
+
+      // li の領域内で最初に出現する [ ] / [x] / [X] を反転（ネストした子の checkbox は別の li が担当）
+      const lines = contentRef.current.split("\n");
+      const sliceLines = lines.slice(startLine, endLine + 1);
+      let toggled = false;
+      const taskRe = /^(\s*[-*+]\s+)\[( |x|X)\]/;
+      const newSliceLines = sliceLines.map((line) => {
+        if (toggled) return line;
+        const m = taskRe.exec(line);
+        if (!m) return line;
+        toggled = true;
+        const flipped = m[2] === " " ? "x" : " ";
+        return line.replace(taskRe, `${m[1]}[${flipped}]`);
+      });
+      if (!toggled) return;
+      onInlineEditRef.current?.(startLine, endLine, newSliceLines.join("\n"));
+    };
+
     container.addEventListener("focusin", handleFocusIn);
     container.addEventListener("focusout", handleFocusOut);
     container.addEventListener("keydown", handleKeyDown);
     container.addEventListener("contextmenu", handleContextMenu);
+    container.addEventListener("click", handleTaskCheckboxClick);
 
     return () => {
       container.removeEventListener("focusin", handleFocusIn);
       container.removeEventListener("focusout", handleFocusOut);
       container.removeEventListener("keydown", handleKeyDown);
       container.removeEventListener("contextmenu", handleContextMenu);
+      container.removeEventListener("click", handleTaskCheckboxClick);
     };
   }, [commitInlineEdit, cancelInlineEdit]);
 
@@ -883,30 +924,55 @@ const MarkdownPreview: FC<Props> = ({
           <option value="serif">Georgia</option>
           <option value="mono">等幅</option>
         </select>
-        <select
-          value={previewSize}
-          onChange={(e) => setPreviewSize(Number(e.target.value))}
-          title="フォントサイズ"
-          className="preview-select"
-        >
-          <option value={12}>12px</option>
-          <option value={13}>13px</option>
-          <option value={14}>14px</option>
-          <option value={16}>16px</option>
-          <option value={18}>18px</option>
-        </select>
-        <select
-          value={previewLineH}
-          onChange={(e) => setPreviewLineH(Number(e.target.value))}
-          title="行間"
-          className="preview-select"
-        >
-          <option value={1.4}>行間 1.4</option>
-          <option value={1.6}>行間 1.6</option>
-          <option value={1.8}>行間 1.8</option>
-          <option value={2.0}>行間 2.0</option>
-          <option value={2.4}>行間 2.4</option>
-        </select>
+        <div className="preview-stepper" title="フォントサイズ">
+          <button
+            className="preview-stepper-btn"
+            onClick={() => setPreviewSize((s) => Math.max(8, s - 2))}
+            aria-label="フォントサイズを小さく"
+          >−</button>
+          <select
+            value={previewSize}
+            onChange={(e) => setPreviewSize(Number(e.target.value))}
+            className="preview-stepper-select"
+            title="フォントサイズ"
+          >
+            {[8,10,12,14,16,18,20,22,24,26,28,30,32,36,40,48].map((v) => (
+              <option key={v} value={v}>{v}px</option>
+            ))}
+          </select>
+          <button
+            className="preview-stepper-btn"
+            onClick={() => setPreviewSize((s) => Math.min(72, s + 2))}
+            aria-label="フォントサイズを大きく"
+          >＋</button>
+        </div>
+        <div className="preview-stepper" title="行間">
+          <button
+            className="preview-stepper-btn"
+            onClick={() => setPreviewLineH((v) => Math.max(1.0, Math.round((v - 0.2) * 10) / 10))}
+            aria-label="行間を狭く"
+          >−</button>
+          <select
+            value={previewLineH}
+            onChange={(e) => setPreviewLineH(Number(e.target.value))}
+            className="preview-stepper-select"
+            title="行間"
+          >
+            {[1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.4,2.6,2.8,3.0].map((v) => (
+              <option key={v} value={v}>行間 {v.toFixed(1)}</option>
+            ))}
+          </select>
+          <button
+            className="preview-stepper-btn"
+            onClick={() => setPreviewLineH((v) => Math.min(3.0, Math.round((v + 0.2) * 10) / 10))}
+            aria-label="行間を広く"
+          >＋</button>
+        </div>
+        <button
+          className="preview-stepper-reset"
+          onClick={() => { setPreviewSize(14); setPreviewLineH(1.6); }}
+          title="フォントサイズと行間をデフォルトに戻す (14px / 1.6)"
+        >↺ 既定</button>
         <div style={{ flex: 1 }} />
         <button
           className={`preview-edit-toggle ${previewEditable ? "editing" : ""}`}
@@ -915,6 +981,15 @@ const MarkdownPreview: FC<Props> = ({
         >
           {previewEditable ? "✏ 編集" : "👁 閲覧"}
         </button>
+        {isPreviewOnly && (
+          <button
+            className="preview-edit-toggle"
+            onClick={onExitPreviewOnly}
+            title="全画面プレビューを解除して通常表示に戻す (Esc / F11)"
+          >
+            ⤡ 全画面解除 (Esc)
+          </button>
+        )}
       </div>
       <div
         ref={ref}

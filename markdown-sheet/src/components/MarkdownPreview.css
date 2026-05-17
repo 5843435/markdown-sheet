@@ -57,6 +57,92 @@
   transition: all 0.15s;
 }
 
+/* ========== ＋／− ステッパー (フォントサイズ / 行間) ========== */
+.preview-stepper {
+  display: inline-flex;
+  align-items: stretch;
+  height: 22px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-surface);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.preview-stepper-btn {
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1;
+  width: 22px;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s, color 0.1s;
+}
+
+.preview-stepper-btn:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.preview-stepper-value {
+  font-size: 11px;
+  color: var(--text);
+  font-family: var(--font-main);
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+  min-width: 50px;
+  justify-content: center;
+  user-select: none;
+}
+
+.preview-stepper-select {
+  background: transparent;
+  border: 0;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  color: var(--text);
+  font-size: 11px;
+  font-family: var(--font-main);
+  padding: 0 4px;
+  cursor: pointer;
+  outline: none;
+  height: 100%;
+  min-width: 70px;
+}
+
+.preview-stepper-select:hover,
+.preview-stepper-select:focus {
+  background: var(--bg-overlay);
+}
+
+.preview-stepper-reset {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: 3px;
+  height: 22px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-family: var(--font-main);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.preview-stepper-reset:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
 .preview-edit-toggle:hover {
   border-color: var(--primary);
   color: var(--primary);
@@ -74,7 +160,7 @@
   padding: 24px;
   overflow-y: auto;
   font-family: var(--font-main);
-  line-height: 1.8;
+  line-height: 1.6;
   color: var(--text);
   background: var(--bg-base);
 }
@@ -94,21 +180,28 @@
   color: var(--text);
 }
 
+/* 先頭要素の上マージンを除去（プレビュー上端と最初の要素の余白が広くなりすぎる対策）。
+   md-content は innerHTML で中身を持つラッパー div なので、その中の :first-child も対象にする。 */
+.md-preview > :first-child,
+.md-preview > div:last-child > :first-child {
+  margin-top: 0;
+}
+
 .md-preview h1 {
-  font-size: 1.8rem;
+  font-size: 1.8em;
   border-bottom: 2px solid var(--border);
   padding-bottom: 0.3em;
   color: var(--primary-hover);
 }
 
 .md-preview h2 {
-  font-size: 1.4rem;
+  font-size: 1.4em;
   border-bottom: 1px solid var(--border);
   padding-bottom: 0.3em;
   color: var(--primary);
 }
 
-.md-preview h3 { font-size: 1.2rem; }
+.md-preview h3 { font-size: 1.2em; }
 
 .md-preview ul, .md-preview ol {
   padding-left: 2em;
@@ -401,6 +494,11 @@
 /* ========== Task List (GFM) ========== */
 .md-preview input[type="checkbox"] {
   margin-right: 0.5em;
+}
+
+/* チェックボックスはプレビュー側でクリック→ソース反転 */
+.md-preview input.md-task-checkbox {
+  cursor: pointer;
 }
 
 /* ========== WYSIWYG Inline Editing ========== */
