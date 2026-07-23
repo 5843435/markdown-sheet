@@ -1,6 +1,7 @@
 import { type FC, useCallback, useEffect, useRef, useState } from "react";
 import type { AiSettings } from "../types";
 import { callAI } from "../lib/callAI";
+import { useT } from "../i18n";
 import { marked } from "marked";
 import { readFile } from "@tauri-apps/plugin-fs";
 import hljs from "highlight.js";
@@ -242,6 +243,11 @@ const MarkdownPreview: FC<Props> = ({
   isPreviewOnly,
   onExitPreviewOnly,
 }) => {
+  const t = useT();
+  // Diagram controls and other UI are injected via innerHTML inside effects; keep the
+  // latest translator in a ref so those effects always read the current language.
+  const tRef = useRef(t);
+  tRef.current = t;
   const [html, setHtml] = useState("");
   const [frontMatter, setFrontMatter] = useState<Record<string, string> | null>(null);
   const internalRef = useRef<HTMLDivElement>(null);
@@ -322,7 +328,7 @@ const MarkdownPreview: FC<Props> = ({
       setHtml(result);
     } catch (error) {
       console.error("Markdown rendering error:", error);
-      setHtml("<p>Markdownのレンダリングに失敗しました</p>");
+      setHtml(`<p>${tRef.current("preview.renderFailed")}</p>`);
     }
   }, [content]);
 
@@ -453,14 +459,14 @@ const MarkdownPreview: FC<Props> = ({
           const actionsDiv = document.createElement("div");
           actionsDiv.className = "mermaid-actions";
           actionsDiv.innerHTML = `
-            <button class="mermaid-btn mermaid-zoom-out" title="縮小">−</button>
+            <button class="mermaid-btn mermaid-zoom-out" title="${tRef.current("mermaid.zoomOut")}">−</button>
             <span class="mermaid-zoom-label">--</span>
-            <button class="mermaid-btn mermaid-zoom-in" title="拡大">+</button>
-            <button class="mermaid-btn mermaid-zoom-reset" title="全体表示にリセット">全体表示</button>
+            <button class="mermaid-btn mermaid-zoom-in" title="${tRef.current("mermaid.zoomIn")}">+</button>
+            <button class="mermaid-btn mermaid-zoom-reset" title="${tRef.current("mermaid.zoomReset")}">${tRef.current("mermaid.zoomResetLabel")}</button>
             <div class="mermaid-actions-spacer"></div>
-            <button class="mermaid-btn mermaid-copy-svg" title="SVGをコピー">SVGコピー</button>
-            <button class="mermaid-btn mermaid-save-svg" title="SVGを保存">SVG保存</button>
-            <button class="mermaid-btn mermaid-ai-toggle" title="AIでダイアグラムを編集">✦ AI編集</button>
+            <button class="mermaid-btn mermaid-copy-svg" title="${tRef.current("mermaid.copySvgTitle")}">${tRef.current("mermaid.copySvg")}</button>
+            <button class="mermaid-btn mermaid-save-svg" title="${tRef.current("mermaid.saveSvgTitle")}">${tRef.current("mermaid.saveSvg")}</button>
+            <button class="mermaid-btn mermaid-ai-toggle" title="${tRef.current("mermaid.aiEditTitle")}">${tRef.current("mermaid.aiEdit")}</button>
           `;
 
           // AI 編集パネル
@@ -468,9 +474,9 @@ const MarkdownPreview: FC<Props> = ({
           aiPanel.className = "mermaid-ai-panel";
           aiPanel.style.display = "none";
           aiPanel.innerHTML = `
-            <textarea class="mermaid-ai-input" placeholder="指示を入力（例: 左から右に変えて）" rows="2"></textarea>
+            <textarea class="mermaid-ai-input" placeholder="${tRef.current("mermaid.aiPlaceholder")}" rows="2"></textarea>
             <div class="mermaid-ai-row">
-              <button class="mermaid-btn mermaid-ai-submit">送信</button>
+              <button class="mermaid-btn mermaid-ai-submit">${tRef.current("mermaid.aiSubmit")}</button>
               <span class="mermaid-ai-status"></span>
             </div>
           `;
@@ -561,7 +567,7 @@ const MarkdownPreview: FC<Props> = ({
             const settings = aiSettingsRef.current;
             const statusEl = aiPanel.querySelector<HTMLElement>(".mermaid-ai-status");
             if (!settings?.apiKey) {
-              if (statusEl) statusEl.textContent = "⚙ ツールバーの設定でAPIキーを入力してください";
+              if (statusEl) statusEl.textContent = tRef.current("mermaid.apiKeyMissing");
               return;
             }
             const inputEl = aiPanel.querySelector<HTMLTextAreaElement>(".mermaid-ai-input");
@@ -570,7 +576,7 @@ const MarkdownPreview: FC<Props> = ({
 
             const submitBtn = aiPanel.querySelector<HTMLButtonElement>(".mermaid-ai-submit");
             if (submitBtn) submitBtn.disabled = true;
-            if (statusEl) statusEl.textContent = "処理中...";
+            if (statusEl) statusEl.textContent = tRef.current("mermaid.processing");
 
             try {
               let newSource = await callAI(
@@ -581,7 +587,7 @@ const MarkdownPreview: FC<Props> = ({
               // AI がコードフェンスを付けた場合でも除去する
               newSource = newSource.replace(/^```(?:mermaid)?\r?\n?/, "").replace(/\r?\n?```$/, "").trim();
               onUpdateMermaidBlockRef.current?.(blockIndex, newSource);
-              if (statusEl) statusEl.textContent = "✓ 更新しました";
+              if (statusEl) statusEl.textContent = tRef.current("mermaid.updated");
               if (inputEl) inputEl.value = "";
               setTimeout(() => { aiPanel.style.display = "none"; }, 1200);
             } catch (err) {
@@ -908,33 +914,33 @@ const MarkdownPreview: FC<Props> = ({
   return (
     <div className="preview-panel">
       <div className="preview-controls-bar">
-        <span className="preview-controls-label">表示</span>
+        <span className="preview-controls-label">{t("preview.viewLabel")}</span>
         <select
           value={previewFont}
           onChange={(e) => setPreviewFont(e.target.value)}
-          title="フォント"
+          title={t("preview.fontTitle")}
           className="preview-select"
         >
-          <option value="system">サンセリフ</option>
-          <option value="meiryo">メイリオ</option>
-          <option value="pgothic">MSPゴシック</option>
-          <option value="yugothic">游ゴシック</option>
-          <option value="yumin">游明朝</option>
-          <option value="msmin">MS P明朝</option>
-          <option value="serif">Georgia</option>
-          <option value="mono">等幅</option>
+          <option value="system">{t("font.sansSerif")}</option>
+          <option value="meiryo">{t("font.meiryo")}</option>
+          <option value="pgothic">{t("font.pgothic")}</option>
+          <option value="yugothic">{t("font.yugothic")}</option>
+          <option value="yumin">{t("font.yumin")}</option>
+          <option value="msmin">{t("font.msmin")}</option>
+          <option value="serif">{t("font.serif")}</option>
+          <option value="mono">{t("font.mono")}</option>
         </select>
-        <div className="preview-stepper" title="フォントサイズ">
+        <div className="preview-stepper" title={t("preview.fontSizeTitle")}>
           <button
             className="preview-stepper-btn"
             onClick={() => setPreviewSize((s) => Math.max(8, s - 2))}
-            aria-label="フォントサイズを小さく"
+            aria-label={t("preview.fontSizeDown")}
           >−</button>
           <select
             value={previewSize}
             onChange={(e) => setPreviewSize(Number(e.target.value))}
             className="preview-stepper-select"
-            title="フォントサイズ"
+            title={t("preview.fontSizeTitle")}
           >
             {[8,10,12,14,16,18,20,22,24,26,28,30,32,36,40,48].map((v) => (
               <option key={v} value={v}>{v}px</option>
@@ -943,51 +949,51 @@ const MarkdownPreview: FC<Props> = ({
           <button
             className="preview-stepper-btn"
             onClick={() => setPreviewSize((s) => Math.min(72, s + 2))}
-            aria-label="フォントサイズを大きく"
+            aria-label={t("preview.fontSizeUp")}
           >＋</button>
         </div>
-        <div className="preview-stepper" title="行間">
+        <div className="preview-stepper" title={t("preview.lineHeightTitle")}>
           <button
             className="preview-stepper-btn"
             onClick={() => setPreviewLineH((v) => Math.max(1.0, Math.round((v - 0.2) * 10) / 10))}
-            aria-label="行間を狭く"
+            aria-label={t("preview.lineHeightDown")}
           >−</button>
           <select
             value={previewLineH}
             onChange={(e) => setPreviewLineH(Number(e.target.value))}
             className="preview-stepper-select"
-            title="行間"
+            title={t("preview.lineHeightTitle")}
           >
             {[1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.4,2.6,2.8,3.0].map((v) => (
-              <option key={v} value={v}>行間 {v.toFixed(1)}</option>
+              <option key={v} value={v}>{t("preview.lineHeightOption", { v: v.toFixed(1) })}</option>
             ))}
           </select>
           <button
             className="preview-stepper-btn"
             onClick={() => setPreviewLineH((v) => Math.min(3.0, Math.round((v + 0.2) * 10) / 10))}
-            aria-label="行間を広く"
+            aria-label={t("preview.lineHeightUp")}
           >＋</button>
         </div>
         <button
           className="preview-stepper-reset"
           onClick={() => { setPreviewSize(14); setPreviewLineH(1.6); }}
-          title="フォントサイズと行間をデフォルトに戻す (14px / 1.6)"
-        >↺ 既定</button>
+          title={t("preview.resetTitle")}
+        >{t("preview.reset")}</button>
         <div style={{ flex: 1 }} />
         <button
           className={`preview-edit-toggle ${previewEditable ? "editing" : ""}`}
           onClick={() => setPreviewEditable((v) => !v)}
-          title={previewEditable ? "閲覧モードに切替" : "編集モードに切替"}
+          title={previewEditable ? t("preview.viewMode") : t("preview.editMode")}
         >
-          {previewEditable ? "✏ 編集" : "👁 閲覧"}
+          {previewEditable ? t("preview.editBtn") : t("preview.readBtn")}
         </button>
         {isPreviewOnly && (
           <button
             className="preview-edit-toggle"
             onClick={onExitPreviewOnly}
-            title="全画面プレビューを解除して通常表示に戻す (Esc / F11)"
+            title={t("preview.exitFullTitle")}
           >
-            ⤡ 全画面解除 (Esc)
+            {t("preview.exitFull")}
           </button>
         )}
       </div>

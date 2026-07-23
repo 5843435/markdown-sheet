@@ -1,4 +1,5 @@
 import { type FC, useEffect, useRef } from "react";
+import { useT } from "../i18n";
 import "./TableContextMenu.css";
 
 export interface TableContextMenuState {
@@ -33,6 +34,7 @@ const TableContextMenu: FC<Props> = ({
   onDeleteColumn,
   onExportCsv,
 }) => {
+  const t = useT();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -55,31 +57,31 @@ const TableContextMenu: FC<Props> = ({
     >
       <div className="ctx-group">
         <button onClick={onAddRowAbove}>
-          <span className="ctx-label">行を上に挿入</span>
+          <span className="ctx-label">{t("table.rowAbove")}</span>
         </button>
         <button onClick={onAddRowBelow}>
-          <span className="ctx-label">行を下に挿入</span>
+          <span className="ctx-label">{t("table.rowBelow")}</span>
         </button>
         <button onClick={onDeleteRow} disabled={menu.row === -1}>
-          <span className="ctx-label">行を削除</span>
+          <span className="ctx-label">{t("table.rowDelete")}</span>
         </button>
       </div>
       <div className="ctx-divider" />
       <div className="ctx-group">
         <button onClick={onAddColumnLeft}>
-          <span className="ctx-label">列を左に挿入</span>
+          <span className="ctx-label">{t("table.colLeft")}</span>
         </button>
         <button onClick={onAddColumnRight}>
-          <span className="ctx-label">列を右に挿入</span>
+          <span className="ctx-label">{t("table.colRight")}</span>
         </button>
         <button onClick={onDeleteColumn}>
-          <span className="ctx-label">列を削除</span>
+          <span className="ctx-label">{t("table.colDelete")}</span>
         </button>
       </div>
       <div className="ctx-divider" />
       <div className="ctx-group">
         <button onClick={onExportCsv}>
-          <span className="ctx-label">CSVエクスポート</span>
+          <span className="ctx-label">{t("table.csvExport")}</span>
         </button>
       </div>
     </div>

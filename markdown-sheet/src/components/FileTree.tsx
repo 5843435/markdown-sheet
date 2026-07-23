@@ -1,5 +1,6 @@
 import { type FC, useState } from "react";
 import type { FileEntry } from "../types";
+import { useT } from "../i18n";
 import "./FileTree.css";
 
 interface Props {
@@ -54,10 +55,11 @@ const FileTreeNode: FC<{
 };
 
 const FileTree: FC<Props> = ({ entries, activeFile, onSelectFile }) => {
+  const t = useT();
   if (entries.length === 0) {
     return (
       <div className="file-tree">
-        <div className="tree-empty">フォルダを開いてください</div>
+        <div className="tree-empty">{t("filetree.empty")}</div>
       </div>
     );
   }

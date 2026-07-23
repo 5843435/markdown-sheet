@@ -1,5 +1,6 @@
 import { type FC, useMemo } from "react";
 import { makeHeadingId } from "../lib/headingId";
+import { useT } from "../i18n";
 import "./OutlinePanel.css";
 
 interface Heading {
@@ -33,12 +34,13 @@ function parseHeadings(content: string): Heading[] {
 }
 
 const OutlinePanel: FC<Props> = ({ content, onHeadingClick }) => {
+  const t = useT();
   const headings = useMemo(() => parseHeadings(content), [content]);
 
   if (headings.length === 0) {
     return (
       <div className="outline-panel">
-        <div className="outline-empty">見出しがありません</div>
+        <div className="outline-empty">{t("outline.empty")}</div>
       </div>
     );
   }

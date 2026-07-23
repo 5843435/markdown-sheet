@@ -1,4 +1,5 @@
 import { type FC, useState } from "react";
+import { useT } from "../i18n";
 import "./SearchReplace.css";
 
 interface Props {
@@ -12,6 +13,7 @@ const SearchReplace: FC<Props> = ({
   onTextReplace,
   onClose,
 }) => {
+  const t = useT();
   const [search, setSearch] = useState("");
   const [replace, setReplace] = useState("");
   const [matchCount, setMatchCount] = useState(0);
@@ -43,30 +45,30 @@ const SearchReplace: FC<Props> = ({
       <div className="sr-row">
         <input
           type="text"
-          placeholder="テキスト検索..."
+          placeholder={t("search.placeholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && doSearch()}
           autoFocus
         />
-        <button onClick={doSearch}>検索</button>
+        <button onClick={doSearch}>{t("search.search")}</button>
         <span className="sr-count">
-          {matchCount > 0 ? `${matchCount}件` : "0件"}
+          {t("search.matches", { n: matchCount })}
         </span>
       </div>
       <div className="sr-row">
         <input
           type="text"
-          placeholder="置換..."
+          placeholder={t("search.replacePlaceholder")}
           value={replace}
           onChange={(e) => setReplace(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && replaceOne()}
         />
         <button onClick={replaceOne} disabled={matchCount === 0}>
-          置換
+          {t("search.replace")}
         </button>
         <button onClick={replaceAll} disabled={matchCount === 0}>
-          全置換
+          {t("search.replaceAll")}
         </button>
         <button className="sr-close" onClick={onClose}>
           ✕

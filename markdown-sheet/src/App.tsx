@@ -14,6 +14,7 @@ import Toolbar from "./components/Toolbar";
 import { callAI } from "./lib/callAI";
 import { makeHeadingId } from "./lib/headingId";
 import type { AiSettings, FileEntry, ParsedDocument, RecentFile, Tab } from "./types";
+import { useI18n, LOCALE_ENGLISH_NAMES, type TranslationKey } from "./i18n";
 
 // ========== AI & Template Constants ==========
 
@@ -23,39 +24,51 @@ const MERMAID_GENERATE_PROMPT =
   "Output ONLY the raw Mermaid source. Do NOT include code fences, explanation, or any other text.";
 
 const TRANSFORM_OPTIONS = [
-  {
-    id: "translate",
-    label: "翻訳 (日⇔英)",
-    prompt:
-      "Translate the following text. If it is Japanese, translate to English. If it is English, translate to Japanese. " +
-      "Return ONLY the translated text, no explanations.",
-  },
-  {
-    id: "summarize",
-    label: "要約",
-    prompt:
-      "Summarize the following text concisely in Japanese. Return ONLY the summary, no additional commentary.",
-  },
-  {
-    id: "proofread",
-    label: "校正",
-    prompt:
-      "Proofread and correct any grammatical or spelling errors in the following text. " +
-      "Preserve the original language and tone. Return ONLY the corrected text.",
-  },
-  {
-    id: "bullets",
-    label: "箇条書き変換",
-    prompt:
-      "Convert the following text into a Markdown bullet list using '- ' prefix. " +
-      "Return ONLY the bullet list, one item per line.",
-  },
-] as const;
+  { id: "translate", labelKey: "ai.transform.translate" },
+  { id: "summarize", labelKey: "ai.transform.summarize" },
+  { id: "proofread", labelKey: "ai.transform.proofread" },
+  { id: "bullets", labelKey: "ai.transform.bullets" },
+] as const satisfies { id: string; labelKey: TranslationKey }[];
 
-const MERMAID_TEMPLATES: { label: string; code: string }[] = [
+// Build the AI system prompt for a transform. `uiLang` is the English name of the
+// active UI language, so "translate" toggles between English and that language and
+// summaries come back in the input's own language regardless of the UI locale.
+function buildTransformPrompt(id: string, uiLang: string): string {
+  switch (id) {
+    case "translate":
+      return (
+        `Translate the following text. If it is not written in English, translate it to English. ` +
+        `If it is already in English, translate it to ${uiLang}. ` +
+        `Return ONLY the translated text, with no explanations.`
+      );
+    case "summarize":
+      return (
+        "Summarize the following text concisely, writing the summary in the same language as the input text. " +
+        "Return ONLY the summary, with no additional commentary."
+      );
+    case "proofread":
+      return (
+        "Proofread and correct any grammatical or spelling errors in the following text. " +
+        "Preserve the original language and tone. Return ONLY the corrected text."
+      );
+    case "bullets":
+      return (
+        "Convert the following text into a Markdown bullet list using '- ' prefix. " +
+        "Return ONLY the bullet list, one item per line."
+      );
+    default:
+      return "";
+  }
+}
+
+// Diagram samples are keyed by label (localized via i18n). The Japanese build keeps
+// the original Japanese node text; every other locale uses the English sample, which
+// is a neutral, universally readable default and avoids RTL/rendering surprises.
+const MERMAID_TEMPLATES: { id: string; labelKey: TranslationKey; codeJa: string; codeEn: string }[] = [
   {
-    label: "業務フロー図",
-    code: `flowchart LR
+    id: "flowchart",
+    labelKey: "template.flowchart",
+    codeJa: `flowchart LR
   開始([開始]) --> 受注[受注処理]
   受注 --> 確認{在庫確認}
   確認 -->|あり| 出荷[出荷手配]
@@ -64,10 +77,20 @@ const MERMAID_TEMPLATES: { label: string; code: string }[] = [
   入荷 --> 出荷
   出荷 --> 請求[請求処理]
   請求 --> 終了([終了])`,
+    codeEn: `flowchart LR
+  Start([Start]) --> Order[Order intake]
+  Order --> Check{Stock check}
+  Check -->|In stock| Ship[Arrange shipping]
+  Check -->|Out of stock| Purchase[Purchase order]
+  Purchase --> Receive[Receiving]
+  Receive --> Ship
+  Ship --> Invoice[Billing]
+  Invoice --> End([End])`,
   },
   {
-    label: "シーケンス図",
-    code: `sequenceDiagram
+    id: "sequence",
+    labelKey: "template.sequence",
+    codeJa: `sequenceDiagram
   actor ユーザー
   participant フロント as フロントエンド
   participant API as バックエンドAPI
@@ -78,10 +101,22 @@ const MERMAID_TEMPLATES: { label: string; code: string }[] = [
   DB-->>API: ユーザー情報
   API-->>フロント: JWTトークン
   フロント-->>ユーザー: ログイン成功`,
+    codeEn: `sequenceDiagram
+  actor User
+  participant Front as Frontend
+  participant API as Backend API
+  participant DB as Database
+  User->>Front: Login request
+  Front->>API: Auth request
+  API->>DB: Verify user
+  DB-->>API: User info
+  API-->>Front: JWT token
+  Front-->>User: Login success`,
   },
   {
-    label: "ER図",
-    code: `erDiagram
+    id: "er",
+    labelKey: "template.er",
+    codeJa: `erDiagram
   顧客 ||--o{ 注文 : "する"
   注文 ||--|{ 注文明細 : "含む"
   商品 ||--o{ 注文明細 : "含まれる"
@@ -100,10 +135,30 @@ const MERMAID_TEMPLATES: { label: string; code: string }[] = [
     string 商品名
     int 価格
   }`,
+    codeEn: `erDiagram
+  CUSTOMER ||--o{ ORDER : places
+  ORDER ||--|{ ORDER_ITEM : contains
+  PRODUCT ||--o{ ORDER_ITEM : "included in"
+  CUSTOMER {
+    int customer_id PK
+    string name
+    string phone
+  }
+  ORDER {
+    int order_id PK
+    int customer_id FK
+    date order_date
+  }
+  PRODUCT {
+    int product_id PK
+    string product_name
+    int price
+  }`,
   },
   {
-    label: "ガントチャート",
-    code: `gantt
+    id: "gantt",
+    labelKey: "template.gantt",
+    codeJa: `gantt
   title プロジェクト計画
   dateFormat YYYY-MM-DD
   section 企画フェーズ
@@ -116,10 +171,24 @@ const MERMAID_TEMPLATES: { label: string; code: string }[] = [
   section リリース
     UAT           :c1, after b3, 7d
     本番リリース  :c2, after c1, 1d`,
+    codeEn: `gantt
+  title Project plan
+  dateFormat YYYY-MM-DD
+  section Planning
+    Requirements   :a1, 2025-04-01, 14d
+    Design doc     :a2, after a1, 7d
+  section Development
+    Frontend       :b1, after a2, 21d
+    Backend        :b2, after a2, 21d
+    Testing        :b3, after b1, 14d
+  section Release
+    UAT            :c1, after b3, 7d
+    Go-live        :c2, after c1, 1d`,
   },
   {
-    label: "クラス図",
-    code: `classDiagram
+    id: "class",
+    labelKey: "template.class",
+    codeJa: `classDiagram
   class ユーザー {
     +int id
     +string 名前
@@ -137,10 +206,29 @@ const MERMAID_TEMPLATES: { label: string; code: string }[] = [
   }
   ユーザー <|-- 管理者
   ユーザー <|-- 一般ユーザー`,
+    codeEn: `classDiagram
+  class User {
+    +int id
+    +string name
+    +string email
+    +login() bool
+    +logout() void
+  }
+  class Admin {
+    +string permissionLevel
+    +deleteUser(id) void
+  }
+  class Member {
+    +int points
+    +usePoints(amount) void
+  }
+  User <|-- Admin
+  User <|-- Member`,
   },
   {
-    label: "マインドマップ",
-    code: `mindmap
+    id: "mindmap",
+    labelKey: "template.mindmap",
+    codeJa: `mindmap
   root((プロジェクト))
     目標
       売上向上
@@ -152,10 +240,23 @@ const MERMAID_TEMPLATES: { label: string; code: string }[] = [
       人員補充
       外部委託
       工程見直し`,
+    codeEn: `mindmap
+  root((Project))
+    Goals
+      Increase sales
+      Reduce cost
+    Challenges
+      Lack of resources
+      Schedule delays
+    Solutions
+      Add staff
+      Outsource
+      Revise process`,
   },
   {
-    label: "組織図",
-    code: `graph TD
+    id: "org",
+    labelKey: "template.org",
+    codeJa: `graph TD
   CEO[代表取締役]
   CEO --> COO[最高執行責任者]
   CEO --> CFO[最高財務責任者]
@@ -165,10 +266,21 @@ const MERMAID_TEMPLATES: { label: string; code: string }[] = [
   営業部 --> 営業2[営業チーム2]
   開発部 --> FE[フロントエンドチーム]
   開発部 --> BE[バックエンドチーム]`,
+    codeEn: `graph TD
+  CEO[CEO]
+  CEO --> COO[COO]
+  CEO --> CFO[CFO]
+  COO --> Sales[Head of Sales]
+  COO --> Dev[Head of Development]
+  Sales --> Sales1[Sales Team 1]
+  Sales --> Sales2[Sales Team 2]
+  Dev --> FE[Frontend Team]
+  Dev --> BE[Backend Team]`,
   },
   {
-    label: "状態遷移図",
-    code: `stateDiagram-v2
+    id: "state",
+    labelKey: "template.state",
+    codeJa: `stateDiagram-v2
   [*] --> 待機中
   待機中 --> 処理中 : 開始
   処理中 --> 完了 : 成功
@@ -176,14 +288,28 @@ const MERMAID_TEMPLATES: { label: string; code: string }[] = [
   エラー --> 待機中 : リトライ
   完了 --> [*]
   エラー --> [*] : キャンセル`,
+    codeEn: `stateDiagram-v2
+  [*] --> Idle
+  Idle --> Processing : start
+  Processing --> Done : success
+  Processing --> Error : failure
+  Error --> Idle : retry
+  Done --> [*]
+  Error --> [*] : cancel`,
   },
   {
-    label: "円グラフ",
-    code: `pie title 売上構成比
+    id: "pie",
+    labelKey: "template.pie",
+    codeJa: `pie title 売上構成比
   "製品A" : 42.5
   "製品B" : 27.3
   "製品C" : 18.2
   "その他" : 12.0`,
+    codeEn: `pie title Sales breakdown
+  "Product A" : 42.5
+  "Product B" : 27.3
+  "Product C" : 18.2
+  "Other" : 12.0`,
   },
 ];
 
@@ -204,6 +330,13 @@ function makeInitialTab(): Tab {
 }
 
 function App() {
+  // --- i18n ---
+  // `t` is used directly in render; `tRef` keeps the latest translator for use inside
+  // useCallback bodies without threading `t` through every dependency array.
+  const { t, locale } = useI18n();
+  const tRef = useRef(t);
+  tRef.current = t;
+
   // --- AI Settings ---
   const [aiSettings, setAiSettings] = useState<AiSettings>(() => {
     const defaults: AiSettings = {
@@ -586,7 +719,7 @@ function App() {
         addRecentFile(filePath);
       } catch (e) {
         console.error("ファイル読み込みエラー:", e);
-        showToast("ファイル読み込みに失敗しました", true);
+        showToast(tRef.current("toast.loadFailed"), true);
       }
     },
     [switchToTab, addRecentFile, saveCurrentToTab, applyTabScroll]
@@ -604,7 +737,7 @@ function App() {
           setTabs((prev) =>
             prev.map((t) => (t.id === currentId ? { ...t, dirty: false } : t))
           );
-          showToast("自動保存しました");
+          showToast(tRef.current("toast.autoSaved"));
         } catch { /* silent */ }
       }
     }, 30_000);
@@ -618,7 +751,7 @@ function App() {
       selected = await open({ directory: true });
     } catch (e) {
       console.error("ダイアログエラー:", e);
-      showToast("フォルダ選択ダイアログを開けませんでした", true);
+      showToast(tRef.current("toast.folderDialogFailed"), true);
       return;
     }
     if (!selected) return;
@@ -644,7 +777,7 @@ function App() {
       });
     } catch (e) {
       console.error("ダイアログエラー:", e);
-      showToast("ファイル選択ダイアログを開けませんでした", true);
+      showToast(tRef.current("toast.fileDialogFailed"), true);
       return;
     }
     if (!selected) return;
@@ -661,10 +794,10 @@ function App() {
       setTabs((prev) =>
         prev.map((t) => (t.id === currentId ? { ...t, dirty: false } : t))
       );
-      showToast("保存しました");
+      showToast(tRef.current("toast.saved"));
     } catch (e) {
       console.error("保存エラー:", e);
-      showToast("保存に失敗しました", true);
+      showToast(tRef.current("toast.saveFailed"), true);
     }
   }, [activeFile, content]);
 
@@ -677,7 +810,7 @@ function App() {
       });
     } catch (e) {
       console.error("ダイアログエラー:", e);
-      showToast("保存ダイアログを開けませんでした", true);
+      showToast(tRef.current("toast.saveDialogFailed"), true);
       return;
     }
     if (!selected) return;
@@ -692,10 +825,10 @@ function App() {
         )
       );
       addRecentFile(selected!);
-      showToast("保存しました");
+      showToast(tRef.current("toast.saved"));
     } catch (e) {
       console.error("保存エラー:", e);
-      showToast("保存に失敗しました", true);
+      showToast(tRef.current("toast.saveFailed"), true);
     }
   }, [content, addRecentFile]);
 
@@ -761,7 +894,7 @@ function App() {
       });
       if (!savePath) return;
 
-      showToast("PDF出力中...");
+      showToast(tRef.current("toast.pdfExporting"));
 
       // スクロール位置を保存してリセット（html2pdf の deepCloneBasic が
       // overflow:hidden + transform で上部コンテンツを切り落とすのを防ぐ）
@@ -785,10 +918,10 @@ function App() {
       // html2pdf.js で ArrayBuffer を取得し、Tauri の writeFile で保存
       const arrayBuffer: ArrayBuffer = await html2pdf().set(opt).from(clone).outputPdf("arraybuffer");
       await writeFile(savePath, new Uint8Array(arrayBuffer));
-      showToast("PDFを保存しました");
+      showToast(tRef.current("toast.pdfSaved"));
     } catch (error) {
       console.error("PDF export error:", error);
-      showToast("PDF出力に失敗しました", true);
+      showToast(tRef.current("toast.pdfFailed"), true);
     }
   }, [activeFile]);
 
@@ -900,11 +1033,11 @@ function App() {
       });
       if (path) {
         await writeTextFile(path, exportContent);
-        showToast("HTMLをエクスポートしました");
+        showToast(tRef.current("toast.htmlExported"));
       }
     } catch (error) {
       console.error("HTML export error:", error);
-      showToast("HTMLエクスポートに失敗しました", true);
+      showToast(tRef.current("toast.htmlFailed"), true);
     }
   }, [activeFile]);
 
@@ -933,11 +1066,11 @@ function App() {
       });
       if (path) {
         await writeFile(path, new Uint8Array(arrayBuffer));
-        showToast("Wordをエクスポートしました");
+        showToast(tRef.current("toast.wordExported"));
       }
     } catch (error) {
       console.error("Word export error:", error);
-      showToast("Wordエクスポートに失敗しました", true);
+      showToast(tRef.current("toast.wordFailed"), true);
     }
   }, [activeFile]);
 
@@ -988,9 +1121,9 @@ function App() {
 
       const newContent = content + "\n\n" + tableMarkdown + "\n";
       handleContentChange(newContent);
-      showToast("CSVをインポートしました");
+      showToast(tRef.current("toast.csvImported"));
     } catch (e) {
-      showToast("CSVインポートに失敗しました", true);
+      showToast(tRef.current("toast.csvFailed"), true);
     }
   }, [content, handleContentChange]);
 
@@ -1011,7 +1144,7 @@ function App() {
       let newSelEnd = end;
 
       const wrapInline = (marker: string) => {
-        const text = selected || "テキスト";
+        const text = selected || tRef.current("editor.defaultText");
         newContent = `${before}${marker}${text}${marker}${after}`;
         newSelStart = start + marker.length;
         newSelEnd = newSelStart + text.length;
@@ -1058,7 +1191,7 @@ function App() {
         case "ol":    prefixLines("1. ");  break;
         case "quote": prefixLines("> ");   break;
         case "link": {
-          const text = selected || "リンクテキスト";
+          const text = selected || tRef.current("editor.linkText");
           newContent = `${before}[${text}](url)${after}`;
           newSelStart = start + 1;
           newSelEnd = newSelStart + text.length;
@@ -1132,15 +1265,16 @@ function App() {
 
   // --- Feature 2: AI text transform ---
   const handleAiTransform = useCallback(
-    async (prompt: string) => {
+    async (id: string) => {
       setAiTransformOpen(false);
       setAiTransformPos(null);
       const sel = savedSelectionRef.current;
       if (!sel || sel.start === sel.end) return;
       if (!aiSettings.apiKey) {
-        showToast("⚙ 設定でAPIキーを入力してください", true);
+        showToast(tRef.current("toast.apiKeyMissing"), true);
         return;
       }
+      const prompt = buildTransformPrompt(id, LOCALE_ENGLISH_NAMES[locale]);
       const selectedText = contentRef.current.substring(sel.start, sel.end);
       setAiTransforming(true);
       try {
@@ -1150,20 +1284,25 @@ function App() {
           result +
           contentRef.current.substring(sel.end);
         handleContentChange(newContent);
-        showToast("AIが変換しました");
+        showToast(tRef.current("toast.aiTransformed"));
       } catch (err) {
-        showToast(`AI変換失敗: ${err instanceof Error ? err.message : String(err)}`, true);
+        showToast(
+          tRef.current("toast.aiTransformFailed", {
+            error: err instanceof Error ? err.message : String(err),
+          }),
+          true
+        );
       } finally {
         setAiTransforming(false);
       }
     },
-    [aiSettings, handleContentChange]
+    [aiSettings, handleContentChange, locale]
   );
 
   // --- Feature 1: AI Mermaid generation ---
   const handleAiGenerateMermaid = useCallback(async () => {
     if (!aiSettings.apiKey) {
-      setAiGenerateError("⚙ 設定でAPIキーを入力してください");
+      setAiGenerateError(tRef.current("toast.apiKeyMissing"));
       return;
     }
     if (!aiGenerateDesc.trim()) return;
@@ -1196,7 +1335,7 @@ function App() {
       headings.push({ depth: match[1].length, text: match[2].trim() });
     }
     if (headings.length === 0) {
-      showToast("見出しが見つかりません");
+      showToast(tRef.current("toast.noHeadings"));
       return;
     }
 
@@ -1209,7 +1348,7 @@ function App() {
       })
       .join("\n");
 
-    const tocBlock = `## 目次\n\n${toc}\n\n`;
+    const tocBlock = `## ${tRef.current("format.tocLabel")}\n\n${toc}\n\n`;
 
     const textarea = editorRef.current;
     let insertPosition = textarea ? textarea.selectionStart : 0;
@@ -1232,7 +1371,7 @@ function App() {
     try {
       const text = await navigator.clipboard.readText();
       if (!text) {
-        showToast("クリップボードにテキストがありません", true);
+        showToast(tRef.current("toast.clipboardEmpty"), true);
         return;
       }
       setFileTree([]);
@@ -1253,10 +1392,10 @@ function App() {
             : t
         )
       );
-      showToast("クリップボードから貼り付けました");
+      showToast(tRef.current("toast.pastedFromClipboard"));
     } catch (error) {
       console.error("Clipboard read error:", error);
-      showToast("クリップボードの読み取りに失敗しました", true);
+      showToast(tRef.current("toast.clipboardReadFailed"), true);
     }
   }, []);
 
@@ -1347,10 +1486,10 @@ function App() {
           textarea.selectionStart = textarea.selectionEnd = pos + insertText.length;
         });
 
-        showToast(`画像を保存しました: images/${fileName}`);
+        showToast(tRef.current("toast.imageSaved", { name: fileName }));
       } catch (error) {
         console.error("Image paste error:", error);
-        showToast("画像の貼り付けに失敗しました", true);
+        showToast(tRef.current("toast.imagePasteFailed"), true);
       }
     },
     [activeFile, handleContentChange]
@@ -1370,10 +1509,10 @@ function App() {
           "text/plain": textBlob,
         }),
       ]);
-      showToast("書式付きでコピーしました (PPT/Excelに貼り付け可能)");
+      showToast(tRef.current("toast.richCopied"));
     } catch (error) {
       console.error("Rich text copy error:", error);
-      showToast("書式付きコピーに失敗しました", true);
+      showToast(tRef.current("toast.richCopyFailed"), true);
     }
   }, []);
 
@@ -1525,8 +1664,8 @@ function App() {
         // 閉じる前にdirtyチェック
         const tab = tabsRef.current.find((t) => t.id === activeTabIdRef.current);
         if (tab?.dirty) {
-          const name = tab.filePath ? tab.filePath.split(/[\\/]/).pop() ?? "このファイル" : "無題";
-          if (!window.confirm(`"${name}" の変更は保存されていません。閉じますか？`)) return;
+          const name = tab.filePath ? tab.filePath.split(/[\\/]/).pop() ?? tRef.current("tab.thisFile") : tRef.current("tab.untitled");
+          if (!window.confirm(tRef.current("confirm.unsavedClose", { name }))) return;
         }
         closeTab(activeTabIdRef.current);
       } else if (e.key === "F11" || (e.key === "Escape" && isPreviewOnly)) {
@@ -1650,18 +1789,18 @@ function App() {
                 className={`left-tab ${leftPanel === "folder" ? "active" : ""}`}
                 onClick={() => setLeftPanel("folder")}
               >
-                フォルダ
+                {t("panel.folder")}
               </button>
               <button
                 className={`left-tab ${leftPanel === "outline" ? "active" : ""}`}
                 onClick={() => setLeftPanel("outline")}
               >
-                アウトライン
+                {t("panel.outline")}
               </button>
               <button
                 className="left-tab left-panel-close"
                 onClick={() => setLeftPanelVisible(false)}
-                title="パネルを隠す"
+                title={t("panel.hide")}
               >
                 ✕
               </button>
@@ -1690,34 +1829,34 @@ function App() {
                 style={{ flex: `0 0 ${editorRatio}%` }}
               >
                 <div className="editor-panel-header">
-                  <span>Markdown ソース</span>
+                  <span>{t("editor.sourceLabel")}</span>
                   <button
                     className={`sync-scroll-btn ${syncScroll ? "active" : ""}`}
                     onClick={() => setSyncScroll((v) => !v)}
-                    title={syncScroll ? "スクロール同期: ON (クリックでOFF)" : "スクロール同期: OFF (クリックでON)"}
+                    title={syncScroll ? t("editor.syncOn") : t("editor.syncOff")}
                   >
-                    ⇅ 同期
+                    {t("editor.syncBtn")}
                   </button>
                 </div>
                 <div className="format-bar">
-                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("bold"); }} title="太字 (Ctrl+B)"><b>B</b></button>
-                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("italic"); }} title="斜体 (Ctrl+I)"><i>I</i></button>
-                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("strike"); }} title="取り消し線"><s>S</s></button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("bold"); }} title={t("format.bold")}><b>B</b></button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("italic"); }} title={t("format.italic")}><i>I</i></button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("strike"); }} title={t("format.strike")}><s>S</s></button>
                   <span className="format-separator" />
-                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("h1"); }} title="見出し1">H1</button>
-                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("h2"); }} title="見出し2">H2</button>
-                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("h3"); }} title="見出し3">H3</button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("h1"); }} title={t("format.h1")}>H1</button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("h2"); }} title={t("format.h2")}>H2</button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("h3"); }} title={t("format.h3")}>H3</button>
                   <span className="format-separator" />
-                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("ul"); }} title="箇条書きリスト">• リスト</button>
-                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("ol"); }} title="番号付きリスト">1. リスト</button>
-                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("quote"); }} title="引用">&gt; 引用</button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("ul"); }} title={t("format.ul")}>{t("format.ulLabel")}</button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("ol"); }} title={t("format.ol")}>{t("format.olLabel")}</button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("quote"); }} title={t("format.quote")}>{t("format.quoteLabel")}</button>
                   <span className="format-separator" />
-                  <button className="format-btn format-btn-mono" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("code"); }} title="コード">`code`</button>
-                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("link"); }} title="リンク">&#128279; リンク</button>
-                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("hr"); }} title="水平線">&#8212; 区切り</button>
+                  <button className="format-btn format-btn-mono" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("code"); }} title={t("format.code")}>`code`</button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("link"); }} title={t("format.link")}>{t("format.linkLabel")}</button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertFormatting("hr"); }} title={t("format.hr")}>{t("format.hrLabel")}</button>
                   <span className="format-separator" />
-                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertToc(); }} title="目次を挿入">目次</button>
-                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleImportCsv(); }} title="CSVをインポートして追加">CSV</button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleInsertToc(); }} title={t("format.toc")}>{t("format.tocLabel")}</button>
+                  <button className="format-btn" onMouseDown={(e) => { e.preventDefault(); handleImportCsv(); }} title={t("format.csv")}>CSV</button>
                 </div>
                 {/* ===== AI ツールバー (常に全表示) ===== */}
                 {(() => {
@@ -1728,8 +1867,8 @@ function App() {
                       <span
                         className="ai-bar__chip"
                         title={aiEnabled
-                          ? `AI有効: ${aiSettings.provider} / ${aiSettings.model}`
-                          : "APIキーが未設定です。右の「⚙ 設定する」から設定してください"}
+                          ? t("aibar.enabledChip", { provider: aiSettings.provider, model: aiSettings.model })
+                          : t("aibar.disabledChip")}
                       >
                         {aiEnabled ? "✦ AI" : "⚙ AI"}
                       </span>
@@ -1748,9 +1887,9 @@ function App() {
                             if (rect) setTemplatePos({ x: rect.left, y: rect.bottom + 2 });
                           }
                         }}
-                        title="Mermaid図テンプレートを挿入（APIキー不要）"
+                        title={t("aibar.templateTitle")}
                       >
-                        図テンプレ ▾
+                        {t("aibar.templateBtn")}
                       </button>
                       <span className="ai-bar__sep" />
                       {/* Feature 2: AI テキスト変換 */}
@@ -1761,14 +1900,14 @@ function App() {
                           e.preventDefault();
                           e.stopPropagation();
                           if (!aiEnabled) {
-                            showToast("APIキーが設定されていません。設定を開きます");
+                            showToast(t("toast.apiKeyNotSetOpening"));
                             setShowSettings(true);
                             return;
                           }
                           const textarea = editorRef.current;
                           if (!textarea) return;
                           if (textarea.selectionStart === textarea.selectionEnd) {
-                            showToast("テキストを選択してからクリックしてください");
+                            showToast(t("toast.selectTextFirst"));
                             return;
                           }
                           savedSelectionRef.current = {
@@ -1784,10 +1923,10 @@ function App() {
                             setAiTransformOpen(true);
                           }
                         }}
-                        title={aiEnabled ? "選択テキストをAIで変換（翻訳・要約・校正・箇条書き）" : "⚙ APIキー未設定 — クリックして設定を開く"}
+                        title={aiEnabled ? t("aibar.transformTitleOn") : t("aibar.apiKeyOffTitle")}
                         disabled={aiTransforming}
                       >
-                        {aiTransforming ? "変換中..." : "AI変換"}
+                        {aiTransforming ? t("aibar.transformBusy") : t("aibar.transformBtn")}
                       </button>
                       {/* Feature 1: AI Mermaid 生成 */}
                       <button
@@ -1795,16 +1934,16 @@ function App() {
                         onMouseDown={(e) => {
                           e.preventDefault();
                           if (!aiEnabled) {
-                            showToast("APIキーが設定されていません。設定を開きます");
+                            showToast(t("toast.apiKeyNotSetOpening"));
                             setShowSettings(true);
                             return;
                           }
                           setAiGenerateError("");
                           setShowAiGenerate(true);
                         }}
-                        title={aiEnabled ? "AIでMermaid図をゼロから生成" : "⚙ APIキー未設定 — クリックして設定を開く"}
+                        title={aiEnabled ? t("aibar.generateTitleOn") : t("aibar.apiKeyOffTitle")}
                       >
-                        AI図生成
+                        {t("aibar.generateBtn")}
                       </button>
                       {/* API未設定時: 設定を促すリンク */}
                       {!aiEnabled && (
@@ -1814,9 +1953,9 @@ function App() {
                             e.preventDefault();
                             setShowSettings(true);
                           }}
-                          title="設定画面を開いてAPIキーを入力してください"
+                          title={t("aibar.setupHintTitle")}
                         >
-                          ⚙ 設定する →
+                          {t("aibar.setupHint")}
                         </button>
                       )}
                     </div>
@@ -1828,7 +1967,7 @@ function App() {
                   value={content}
                   onChange={(e) => handleContentChange(e.target.value)}
                   onPaste={handlePasteImage}
-                  placeholder="Markdownを入力するか、ファイルを開いてください..."
+                  placeholder={t("editor.placeholder")}
                 />
               </div>
               <div className="divider" onMouseDown={handleMouseDown} />
@@ -1869,16 +2008,16 @@ function App() {
           style={{ left: templatePos.x, top: templatePos.y }}
           onMouseDown={(e) => e.stopPropagation()}
         >
-          {MERMAID_TEMPLATES.map((t) => (
+          {MERMAID_TEMPLATES.map((tpl) => (
             <button
-              key={t.label}
+              key={tpl.id}
               className="ai-dropdown-item"
               onMouseDown={(e) => {
                 e.preventDefault();
-                handleInsertTemplate(t.code);
+                handleInsertTemplate(locale === "ja" ? tpl.codeJa : tpl.codeEn);
               }}
             >
-              {t.label}
+              {t(tpl.labelKey)}
             </button>
           ))}
         </div>
@@ -1897,10 +2036,10 @@ function App() {
               className="ai-dropdown-item"
               onMouseDown={(e) => {
                 e.preventDefault();
-                handleAiTransform(opt.prompt);
+                handleAiTransform(opt.id);
               }}
             >
-              {opt.label}
+              {t(opt.labelKey)}
             </button>
           ))}
         </div>
@@ -1911,15 +2050,15 @@ function App() {
         <div className="ai-gen-overlay" onClick={() => { setShowAiGenerate(false); setAiGenerateDesc(""); setAiGenerateError(""); }}>
           <div className="ai-gen-modal" onClick={(e) => e.stopPropagation()}>
             <div className="ai-gen-header">
-              <span className="ai-gen-title">✦ AIでMermaid図を生成</span>
+              <span className="ai-gen-title">{t("aigen.title")}</span>
               <button className="settings-close" onClick={() => { setShowAiGenerate(false); setAiGenerateDesc(""); setAiGenerateError(""); }}>✕</button>
             </div>
-            <p className="ai-gen-hint">図の内容を日本語で説明してください。AIがMermaidコードを生成します。</p>
+            <p className="ai-gen-hint">{t("aigen.hint")}</p>
             <textarea
               className="ai-gen-textarea"
               value={aiGenerateDesc}
               onChange={(e) => setAiGenerateDesc(e.target.value)}
-              placeholder="例: ECサイトの注文処理フロー図を作って。受注→在庫確認→出荷→請求の流れで"
+              placeholder={t("aigen.placeholder")}
               rows={4}
               autoFocus
               onKeyDown={(e) => {
@@ -1937,14 +2076,14 @@ function App() {
                 className="settings-close-btn"
                 onClick={() => { setShowAiGenerate(false); setAiGenerateDesc(""); setAiGenerateError(""); }}
               >
-                キャンセル
+                {t("aigen.cancel")}
               </button>
               <button
                 className="settings-save-btn"
                 onClick={handleAiGenerateMermaid}
                 disabled={aiGenerating || !aiGenerateDesc.trim()}
               >
-                {aiGenerating ? "生成中..." : "生成 (Ctrl+Enter)"}
+                {aiGenerating ? t("aigen.generating") : t("aigen.generate")}
               </button>
             </div>
           </div>

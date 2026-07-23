@@ -1,5 +1,6 @@
 import { type FC, useEffect, useRef, useState } from "react";
 import type { RecentFile } from "../types";
+import { useT } from "../i18n";
 import "./Toolbar.css";
 
 interface Props {
@@ -59,6 +60,7 @@ const Toolbar: FC<Props> = ({
   onTogglePreviewOnly,
   onOpenSettings,
 }) => {
+  const t = useT();
   const [showRecent, setShowRecent] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -77,27 +79,27 @@ const Toolbar: FC<Props> = ({
   return (
     <div className="toolbar">
       <div className="toolbar-left">
-        {/* ===== 入力グループ ===== */}
-        <span className="toolbar-group-label">入力</span>
-        <button onClick={onOpenFolder} title="フォルダを開く">
-          <span className="icon">&#128193;</span> フォルダ
+        {/* ===== Input group ===== */}
+        <span className="toolbar-group-label">{t("toolbar.group.input")}</span>
+        <button onClick={onOpenFolder} title={t("toolbar.openFolder")}>
+          <span className="icon">&#128193;</span> {t("toolbar.folder")}
         </button>
-        <button onClick={onOpenFile} title="ファイルを開く">
-          <span className="icon">&#128196;</span> 開く
+        <button onClick={onOpenFile} title={t("toolbar.openFile")}>
+          <span className="icon">&#128196;</span> {t("toolbar.open")}
         </button>
-        {/* 履歴ドロップダウン */}
+        {/* Recent files dropdown */}
         <div className="toolbar-dropdown-wrap" ref={dropdownRef}>
           <button
             onClick={() => setShowRecent((v) => !v)}
-            title="最近開いたファイル"
+            title={t("toolbar.recent")}
             className={showRecent ? "active-dropdown" : ""}
           >
-            &#128221; 履歴
+            &#128221; {t("toolbar.recentLabel")}
           </button>
           {showRecent && (
             <div className="toolbar-dropdown">
               {recentFiles.length === 0 ? (
-                <div className="dropdown-empty">履歴なし</div>
+                <div className="dropdown-empty">{t("toolbar.recentEmpty")}</div>
               ) : (
                 recentFiles.map((f) => (
                   <div
@@ -116,73 +118,73 @@ const Toolbar: FC<Props> = ({
             </div>
           )}
         </div>
-        <button onClick={onPasteFromClipboard} title="クリップボードのテキストを貼り付け">
-          <span className="icon">&#128203;</span> クリップボード
+        <button onClick={onPasteFromClipboard} title={t("toolbar.pasteClipboard")}>
+          <span className="icon">&#128203;</span> {t("toolbar.clipboard")}
         </button>
 
         <div className="toolbar-separator" />
 
-        {/* ===== 保存グループ ===== */}
-        <span className="toolbar-group-label">保存</span>
-        <button onClick={onSave} title="上書き保存 (Ctrl+S)" disabled={!dirty}>
-          <span className="icon">&#128190;</span> 保存
+        {/* ===== Save group ===== */}
+        <span className="toolbar-group-label">{t("toolbar.group.save")}</span>
+        <button onClick={onSave} title={t("toolbar.saveTitle")} disabled={!dirty}>
+          <span className="icon">&#128190;</span> {t("toolbar.save")}
         </button>
-        <button onClick={onSaveAs} title="別名で保存">
-          名前を付けて保存
-        </button>
-
-        <div className="toolbar-separator" />
-
-        {/* ===== 編集グループ ===== */}
-        <span className="toolbar-group-label">編集</span>
-        <button onClick={onUndo} disabled={!canUndo} title="元に戻す (Ctrl+Z)">
-          &#8630; 戻す
-        </button>
-        <button onClick={onRedo} disabled={!canRedo} title="やり直す (Ctrl+Y)">
-          &#8631; やり直す
-        </button>
-        <button onClick={onToggleSearch} title="検索・置換 (Ctrl+F)">
-          &#128269; 検索
+        <button onClick={onSaveAs} title={t("toolbar.saveAsTitle")}>
+          {t("toolbar.saveAs")}
         </button>
 
         <div className="toolbar-separator" />
 
-        {/* ===== 表示グループ ===== */}
-        <span className="toolbar-group-label">表示</span>
+        {/* ===== Edit group ===== */}
+        <span className="toolbar-group-label">{t("toolbar.group.edit")}</span>
+        <button onClick={onUndo} disabled={!canUndo} title={t("toolbar.undoTitle")}>
+          &#8630; {t("toolbar.undo")}
+        </button>
+        <button onClick={onRedo} disabled={!canRedo} title={t("toolbar.redoTitle")}>
+          &#8631; {t("toolbar.redo")}
+        </button>
+        <button onClick={onToggleSearch} title={t("toolbar.searchTitle")}>
+          &#128269; {t("toolbar.search")}
+        </button>
+
+        <div className="toolbar-separator" />
+
+        {/* ===== View group ===== */}
+        <span className="toolbar-group-label">{t("toolbar.group.view")}</span>
         <button
           onClick={onToggleLeftPanel}
-          title={leftPanelVisible ? "パネルを隠す" : "パネルを表示"}
+          title={leftPanelVisible ? t("toolbar.panelHide") : t("toolbar.panelShow")}
         >
-          {leftPanelVisible ? "◁ パネル" : "▷ パネル"}
+          {leftPanelVisible ? t("toolbar.panelOn") : t("toolbar.panelOff")}
         </button>
         <button
           onClick={onToggleEditor}
-          title={`エディタを${editorVisible ? "非表示" : "表示"} (Ctrl+\\)`}
+          title={editorVisible ? t("toolbar.editorHideTitle") : t("toolbar.editorShowTitle")}
         >
-          {editorVisible ? "◀ エディタ" : "▶ エディタ"}
+          {editorVisible ? t("toolbar.editorOn") : t("toolbar.editorOff")}
         </button>
         <button
           onClick={onTogglePreviewOnly}
           className={isPreviewOnly ? "active-dropdown" : ""}
-          title="プレビューだけを全画面表示 (F11)"
+          title={t("toolbar.fullPreviewTitle")}
         >
-          ⛶ 全画面プレビュー (F11)
+          {t("toolbar.fullPreview")}
         </button>
 
         <div className="toolbar-separator" />
 
-        {/* ===== 出力グループ ===== */}
-        <span className="toolbar-group-label">出力</span>
-        <button onClick={onCopyRichText} title="書式付きでコピー (PPT/Excel向け)">
-          書式コピー
+        {/* ===== Output group ===== */}
+        <span className="toolbar-group-label">{t("toolbar.group.output")}</span>
+        <button onClick={onCopyRichText} title={t("toolbar.richCopyTitle")}>
+          {t("toolbar.richCopy")}
         </button>
-        <button onClick={onExportPdf} title="PDFとしてエクスポート">
+        <button onClick={onExportPdf} title={t("toolbar.pdfTitle")}>
           PDF
         </button>
-        <button onClick={onExportHtml} title="HTMLとしてエクスポート">
+        <button onClick={onExportHtml} title={t("toolbar.htmlTitle")}>
           HTML
         </button>
-        <button onClick={onExportWord} title="Wordファイルとしてエクスポート">
+        <button onClick={onExportWord} title={t("toolbar.wordTitle")}>
           Word
         </button>
       </div>
@@ -190,14 +192,14 @@ const Toolbar: FC<Props> = ({
         <button
           className="settings-btn"
           onClick={onOpenSettings}
-          title="設定 (AI API など)"
+          title={t("toolbar.settingsTitle")}
         >
           ⚙
         </button>
         <button
           className="theme-toggle"
           onClick={onToggleTheme}
-          title={`${theme === "light" ? "ダーク" : "ライト"}テーマに切替`}
+          title={theme === "light" ? t("toolbar.themeToDark") : t("toolbar.themeToLight")}
         >
           {theme === "light" ? "\u263E" : "\u2600"}
         </button>

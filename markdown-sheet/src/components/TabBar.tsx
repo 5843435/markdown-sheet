@@ -1,5 +1,6 @@
 import { type FC } from "react";
 import type { Tab } from "../types";
+import { useT } from "../i18n";
 import "./TabBar.css";
 
 interface Props {
@@ -11,19 +12,20 @@ interface Props {
 }
 
 const TabBar: FC<Props> = ({ tabs, activeTabId, onSelectTab, onCloseTab, onNewTab }) => {
+  const t = useT();
   return (
     <div className="tab-bar">
       {tabs.map((tab) => {
         const name = tab.filePath
-          ? tab.filePath.split(/[\\/]/).pop() ?? "無題"
-          : "無題";
+          ? tab.filePath.split(/[\\/]/).pop() ?? t("tab.untitled")
+          : t("tab.untitled");
         const isActive = tab.id === activeTabId;
         return (
           <div
             key={tab.id}
             className={`tab-item ${isActive ? "active" : ""}`}
             onClick={() => onSelectTab(tab.id)}
-            title={tab.filePath ?? "保存されていない新規ファイル"}
+            title={tab.filePath ?? t("tab.unsavedNew")}
           >
             <span className="tab-label">
               {name}
@@ -36,11 +38,11 @@ const TabBar: FC<Props> = ({ tabs, activeTabId, onSelectTab, onCloseTab, onNewTa
                 e.stopPropagation();
                 e.preventDefault();
                 if (tab.dirty) {
-                  if (!window.confirm(`"${name}" の変更は保存されていません。閉じますか？`)) return;
+                  if (!window.confirm(t("confirm.unsavedClose", { name }))) return;
                 }
                 onCloseTab(tab.id);
               }}
-              title="タブを閉じる"
+              title={t("tab.close")}
               disabled={tabs.length <= 1}
             >
               ×
@@ -48,7 +50,7 @@ const TabBar: FC<Props> = ({ tabs, activeTabId, onSelectTab, onCloseTab, onNewTa
           </div>
         );
       })}
-      <button className="tab-new-btn" onClick={onNewTab} title="新しいタブ">
+      <button className="tab-new-btn" onClick={onNewTab} title={t("tab.new")}>
         +
       </button>
     </div>
