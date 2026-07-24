@@ -21,7 +21,7 @@
     "marked": "^17.0.2",
     "mermaid": "^11.12.2",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.2.0",
