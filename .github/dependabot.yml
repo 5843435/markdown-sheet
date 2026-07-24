@@ -5,15 +5,27 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    groups:
+      npm-all:
+        patterns:
+          - "*"
 
   - package-ecosystem: cargo
     directory: /markdown-sheet/src-tauri
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    groups:
+      cargo-all:
+        patterns:
+          - "*"
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    groups:
+      github-actions-all:
+        patterns:
+          - "*"
