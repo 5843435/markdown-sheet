@@ -205,3 +205,7 @@ graph TD
     App -..->|uses| useTableEditor["useTableEditor\nupdateCell / addRow\naddColumn / deleteRow"]
     useTableEditor -..->|uses| useUndoRedo["useUndoRedo(T)\npush / undo / redo / reset"]
 ```
+
+## Licencia
+
+Publicado bajo la [Licencia MIT](LICENSE).
