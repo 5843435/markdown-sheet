@@ -460,6 +460,13 @@
   align-items: baseline;
 }
 
+.yaml-front-matter { flex-direction: column; }
+.yaml-front-matter .yaml-entry { align-items: flex-start; }
+.yaml-front-matter .yaml-key { flex-shrink: 0; }
+.yaml-front-matter .yaml-value { white-space: pre-wrap; overflow-wrap: anywhere; min-width: 0; }
+.yaml-front-matter .yaml-value ul { margin: 0; padding-left: 1.5em; }
+.yaml-front-matter .yaml-value li { margin: 0; }
+
 .yaml-key {
   color: var(--primary);
   font-weight: 600;

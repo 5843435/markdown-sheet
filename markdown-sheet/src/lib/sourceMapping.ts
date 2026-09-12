@@ -1,3 +1,4 @@
+import { splitFrontMatter } from "./frontMatter";
 import { marked, type Tokens } from "marked";
 
 export interface SourceMapping {
@@ -144,17 +145,5 @@ export function computeTableMappings(body: string): TableMapping[] {
  * frontmatter がなければ 0。
  */
 export function countFrontMatterLines(content: string): number {
-  if (!content.startsWith("---\n") && !content.startsWith("---\r\n")) {
-    return 0;
-  }
-  const end = content.indexOf("\n---", 4);
-  if (end === -1) return 0;
-  // "---\n" + yaml + "\n---\n" の行数
-  const fmBlock = content.slice(0, end + 4); // includes "\n---"
-  // 末尾に改行があればそれも含む
-  const afterFm = end + 4;
-  const hasTrailingNl =
-    content[afterFm] === "\n" || content[afterFm] === "\r";
-  const lines = fmBlock.split("\n").length;
-  return hasTrailingNl ? lines : lines;
+  return splitFrontMatter(content)?.lineCount ?? 0;
 }

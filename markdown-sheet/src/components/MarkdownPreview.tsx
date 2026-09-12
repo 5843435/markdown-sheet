@@ -1,3 +1,4 @@
+import { extractFrontMatter } from "../lib/frontMatter";
 import { type FC, useCallback, useEffect, useRef, useState } from "react";
 import type { AiSettings } from "../types";
 import { callAI } from "../lib/callAI";
@@ -183,34 +184,11 @@ function normalizeTableLines(content: string): string {
 /**
  * YAML フロントマターを抽出して本文と分離する
  */
-function extractFrontMatter(content: string): {
-  meta: Record<string, string> | null;
-  body: string;
-} {
-  if (!content.startsWith("---\n") && !content.startsWith("---\r\n")) {
-    return { meta: null, body: content };
-  }
-  const end = content.indexOf("\n---", 4);
-  if (end === -1) return { meta: null, body: content };
-
-  const yaml = content.slice(4, end).trim();
-  const body = content.slice(end + 4).replace(/^\r?\n/, "");
-  const meta: Record<string, string> = {};
-
-  for (const line of yaml.split("\n")) {
-    const colon = line.indexOf(":");
-    if (colon > 0) {
-      const key = line.slice(0, colon).trim();
-      const value = line
-        .slice(colon + 1)
-        .trim()
-        .replace(/^["']|["']$/g, "");
-      if (key) meta[key] = value;
-    }
-  }
-  return { meta: Object.keys(meta).length > 0 ? meta : null, body };
+function renderYamlValue(value: unknown): React.ReactNode {
+  if (Array.isArray(value)) return <ul>{value.map((item, i) => <li key={i}>{renderYamlValue(item)}</li>)}</ul>;
+  if (value !== null && typeof value === "object") return <div>{Object.entries(value).map(([key, item]) => <div className="yaml-entry" key={key}><span className="yaml-key">{key}</span><div className="yaml-value">{renderYamlValue(item)}</div></div>)}</div>;
+  return value === null ? "null" : String(value);
 }
-
 const FONT_MAP: Record<string, string> = {
   system:   '"Segoe UI", "Meiryo", sans-serif',
   meiryo:   '"Meiryo", "メイリオ", sans-serif',
@@ -249,7 +227,7 @@ const MarkdownPreview: FC<Props> = ({
   const tRef = useRef(t);
   tRef.current = t;
   const [html, setHtml] = useState("");
-  const [frontMatter, setFrontMatter] = useState<Record<string, string> | null>(null);
+  const [frontMatter, setFrontMatter] = useState<Record<string, unknown> | null>(null);
   const internalRef = useRef<HTMLDivElement>(null);
   const ref = externalRef || internalRef;
   // AI 設定と更新コールバックの最新値を ref で保持（useEffect 内の stale closure 回避）
@@ -1007,7 +985,7 @@ const MarkdownPreview: FC<Props> = ({
             {Object.entries(frontMatter).map(([k, v]) => (
               <div key={k} className="yaml-entry">
                 <span className="yaml-key">{k}</span>
-                <span className="yaml-value">{v}</span>
+                <div className="yaml-value">{renderYamlValue(v)}</div>
               </div>
             ))}
           </div>
